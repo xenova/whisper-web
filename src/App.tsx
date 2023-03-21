@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { AudioManager } from './components/AudioManager';
 import AudioPlayer from './components/AudioPlayer'
 import { TranscribeButton } from './components/TranscribeButton';
 import Transcript from './components/Transcript'
@@ -47,6 +48,8 @@ function App() {
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-7xl">Whisper Web</h1>
             <h2 className="mt-3 mb-3 text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl">AI speech-to-text directly in your browser</h2>
 
+            <AudioManager />
+
             <AudioPlayer />
 
             <UrlInput onChange={(event) => {
@@ -54,7 +57,7 @@ function App() {
             }} value={url} />
 
             <TranscribeButton onClick={transcribe} isLoading={isAudioLoading || transcriber.isBusy} />
-
+            
             <Transcript value={transcriber.output} />
 
         </div>
