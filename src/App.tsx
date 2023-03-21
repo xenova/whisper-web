@@ -1,78 +1,47 @@
-import { useState } from 'react';
-
+import { useCallback, useEffect, useState } from 'react';
 import AudioPlayer from './components/AudioPlayer'
+import { TranscribeButton } from './components/TranscribeButton';
 import Transcript from './components/Transcript'
-
+import { UrlInput } from './components/UrlInput';
+import { useTranscriber } from './hooks/useTranscriber';
+import Constants from './utils/Constants';
 
 function App() {
+    const [url, setUrl] = useState(Constants.DEFAULT_AUDIO_URL);
+    const [isAudioLoading, setIsAudioLoading] = useState(false);
+    const [audioData, setAudioData] = useState<AudioBuffer | undefined>(undefined);
+    const transcriber = useTranscriber();
 
-    const [transcript, setTranscript] = useState('');
-
-    const [worker, setWorker] = useState<Promise<any> | null>(null);
-
-    const loadWorker = async () => {
-        const workerUrl = new URL('./worker.js', import.meta.url);
-        const worker = new Worker(workerUrl, { type: 'module' });
-
-        // Listen for messages from the Web Worker
-        worker.addEventListener('message', event => {
-            const message = event.data;
-
-            // Update the state with the result
-            switch (message.type) {
-                case 'download':
-                    // Received a download message
-                    // TODO add download/loading bar
-                    console.log('download', message)
-                    break;
-                case 'update':
-                    // Received partial update
-                    setTranscript(message.data)
-                    console.log('update', message)
-                    break;
-                case 'complete':
-                    // Received complete transcript
-                    setTranscript(JSON.stringify(message.data))
-                    console.log('complete', message)
-                    break;
-            }
-        });
-
-        return worker
+    const loadAudio = async(requestAbortController: AbortController) => {
+        try{
+            setAudioData(undefined);
+            setIsAudioLoading(true);
+            const samplingRate = 16000;
+            // Since AudioContext is not available in web worker, we get the audio data first
+            const audioCTX = new AudioContext({ sampleRate: samplingRate })
+            const response = await (await fetch(url, {signal: requestAbortController.signal})).arrayBuffer()
+            const decoded = await audioCTX.decodeAudioData(response)
+            setAudioData(decoded);
+        }
+        catch(error) {
+            console.log("Request failed or aborted");
+        }
+        finally{
+            setIsAudioLoading(false);
+        }
     }
 
-    async function transcribe() {
-        // TODO disable button, then re-enable once complete
-        // (do not allow multiple clicks)
+    useEffect(() => {
+        // Offload the actual work to the web worker (allowing the UI thread to not be blocked
+        transcriber.start(audioData);
+        // TODO: Add cleanup function
+    }, [audioData])
 
-        // Little trick to do the following:
-        //  (1) only load the worker once
-        //  (2) pause if function run and worker still loading
-        let workerObj = await worker;
-        if (!workerObj) {
-            workerObj = loadWorker();
-            setWorker(workerObj);
-            workerObj = await workerObj;
-        }
-
-        // Next, we offload the actual work to the web worker (allowing the UI thread to not be blocked)
-        // Since AudioContext is not available in web worker, we get the audio data first
-
-        // Specify audio track(s)
-        // TODO allow user to change/upload
-        let audio = 'https://xenova.github.io/transformers.js/assets/audio/ted_60.wav';
-
-        const sampling_rate = 16000;
-        const audioCTX = new AudioContext({ sampleRate: sampling_rate })
-        const response = await (await fetch(audio)).arrayBuffer()
-        const decoded = await audioCTX.decodeAudioData(response)
-
-        let data = {
-            audio: decoded.getChannelData(0)
-        }
-
-        workerObj.postMessage(data);
-    }
+    const transcribe = async () => {
+        const requestAbortController = new AbortController();
+        // First load audio data from URL
+        await loadAudio(requestAbortController);
+    };
 
     return (
         <div className="flex flex-col justify-center items-center h-screen">
@@ -81,13 +50,13 @@ function App() {
 
             <AudioPlayer />
 
-            <button
-                onClick={transcribe}
-                className="bg-slate-900 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 text-white font-semibold h-12 px-6 rounded-lg w-full flex items-center justify-center sm:w-auto dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400">
-                Transcribe
-            </button>
+            <UrlInput onChange={(event) => {
+                setUrl(event.target.value);
+            }} value={url} />
 
-            <Transcript value={transcript} />
+            <TranscribeButton onClick={transcribe} isLoading={isAudioLoading || transcriber.isBusy}/>
+
+            <Transcript value={transcriber.output} />
 
         </div>
     );
