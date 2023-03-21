@@ -40,7 +40,7 @@ export function useTranscriber() {
             start: postAudioData,
             output: transcript
         };
-    }, [postAudioData, transcript]);
+    }, [isBusy, postAudioData, transcript]);
 
     return transcriber;
 }
