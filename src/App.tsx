@@ -12,20 +12,20 @@ function App() {
     const [audioData, setAudioData] = useState<AudioBuffer | undefined>(undefined);
     const transcriber = useTranscriber();
 
-    const loadAudio = async(requestAbortController: AbortController) => {
-        try{
+    const loadAudio = async (requestAbortController: AbortController) => {
+        try {
             setAudioData(undefined);
             setIsAudioLoading(true);
             // Since AudioContext is not available in web worker, we get the audio data first
             const audioCTX = new AudioContext({ sampleRate: Constants.SAMPLING_RATE })
-            const response = await (await fetch(url, {signal: requestAbortController.signal})).arrayBuffer()
+            const response = await (await fetch(url, { signal: requestAbortController.signal })).arrayBuffer()
             const decoded = await audioCTX.decodeAudioData(response)
             setAudioData(decoded);
         }
-        catch(error) {
+        catch (error) {
             console.log("Request failed or aborted");
         }
-        finally{
+        finally {
             setIsAudioLoading(false);
         }
     }
@@ -53,7 +53,7 @@ function App() {
                 setUrl(event.target.value);
             }} value={url} />
 
-            <TranscribeButton onClick={transcribe} isLoading={isAudioLoading || transcriber.isBusy}/>
+            <TranscribeButton onClick={transcribe} isLoading={isAudioLoading || transcriber.isBusy} />
 
             <Transcript value={transcriber.output} />
 

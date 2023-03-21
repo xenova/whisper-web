@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useWorker } from "./useWorker";
 
-export function useTranscriber(){
+export function useTranscriber() {
     const [transcript, setTranscript] = useState("");
     const [isBusy, setIsBusy] = useState(false);
     const webWorker = useWorker(event => {
@@ -28,7 +28,7 @@ export function useTranscriber(){
     });
 
     const postAudioData = useCallback(async (audioData: AudioBuffer | undefined) => {
-        if(audioData){
+        if (audioData) {
             setIsBusy(true);
             webWorker.postMessage({ audio: audioData.getChannelData(0) });
         }
