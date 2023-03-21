@@ -16,9 +16,8 @@ function App() {
         try{
             setAudioData(undefined);
             setIsAudioLoading(true);
-            const samplingRate = 16000;
             // Since AudioContext is not available in web worker, we get the audio data first
-            const audioCTX = new AudioContext({ sampleRate: samplingRate })
+            const audioCTX = new AudioContext({ sampleRate: Constants.SAMPLING_RATE })
             const response = await (await fetch(url, {signal: requestAbortController.signal})).arrayBuffer()
             const decoded = await audioCTX.decodeAudioData(response)
             setAudioData(decoded);
