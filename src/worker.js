@@ -71,48 +71,41 @@ const transcribe = async (audio) => {
         finalised: false
     }];
 
-
-    // Inject custom callback function to handle merging of chunks
-    function callback_function(item) {
+    function chunk_callback(chunk) {
         let last = all_chunks[all_chunks.length - 1];
 
-        // TODO add type to callback
-        // For now, we determine whether it is a beam, or a chunk by its type:
-        let isBeam = Array.isArray(item);
-        if (isBeam) { // beam 
-            last.tokens = [...item[0].output_token_ids];
-        } else { // chunk
-            // Overwrite last chunk with new info
-            Object.assign(last, item);
-            last.finalised = true;
-        }
+        // Overwrite last chunk with new info
+        Object.assign(last, chunk);
+        last.finalised = true;
 
-        let chunks = all_chunks.filter(x => x.finalised);
-        let [t, _] = transcriber.tokenizer._decode_asr(chunks, {
-            time_precision: time_precision,
-            return_timestamps: true,
-            force_full_sequences: false
-        })
-
-        if (!last.finalised) {
-            // last one isn't finalsed, so we append text
-            t += transcriber.tokenizer.decode(last.tokens, {
-                skip_special_tokens: true,
-            })
-        }
-
-        // Create an empty chunk after
-        if (!isBeam && !item.is_last) {
+        // Create an empty chunk after, if it not the last chunk
+        if (!chunk.is_last) {
             all_chunks.push({
                 tokens: [],
                 finalised: false
             })
         }
+    }
+
+    // Inject custom callback function to handle merging of chunks
+    function callback_function(item) {
+        let last = all_chunks[all_chunks.length - 1];
+
+        // Update tokens of last chunk
+        last.tokens = [...item[0].output_token_ids];
+
+        // Merge text chunks
+        // TODO optimise so we don't have to decode all chunks every time
+        let data = transcriber.tokenizer._decode_asr(all_chunks, {
+            time_precision: time_precision,
+            return_timestamps: true,
+            force_full_sequences: false
+        });
 
         self.postMessage({
             type: 'update',
             task: 'automatic-speech-recognition',
-            data: t
+            data: data
         });
     }
 
@@ -129,12 +122,12 @@ const transcribe = async (audio) => {
 
         // Return timestamps
         return_timestamps: true,
+        force_full_sequences: false,
 
-        // Return finalised chunks
-        return_chunks: true,
+        // Callback functions
+        callback_function: callback_function, // after each generation step
+        chunk_callback: chunk_callback, // after each chunk is processed
 
-        // Run callback after each generation step
-        callback_function: callback_function
     });
 
     return output;

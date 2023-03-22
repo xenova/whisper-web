@@ -15,7 +15,7 @@ export function useTranscriber() {
                 break;
             case 'update':
                 // Received partial update
-                setTranscript(message.data)
+                setTranscript(JSON.stringify(message.data))
                 console.log('update', message)
                 break;
             case 'complete':
