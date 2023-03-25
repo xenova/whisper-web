@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import Constants from "../utils/Constants";
-import Modal from "./Modal";
-import { UrlInput } from "./UrlInput";
+import Modal from "./modal/Modal";
+import { UrlInput } from "./modal/UrlInput";
 import axios from "axios";
 import { TranscribeButton } from "./TranscribeButton";
 import { Transcriber } from "../hooks/useTranscriber";
