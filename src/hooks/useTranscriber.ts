@@ -1,8 +1,31 @@
 import { useCallback, useMemo, useState } from "react";
 import { useWorker } from "./useWorker";
 
-export function useTranscriber() {
-    const [transcript, setTranscript] = useState("");
+interface TranscriberUpdateData {
+    data: [string, {chunks: {text: string, timestamp: [number, number | null]}[]}];
+    text: string;
+}
+
+interface TranscriberCompleteData {
+    data: {
+        text: string; 
+        chunks: {text: string, timestamp: [number, number | null]}[]
+    };
+}
+
+export interface TranscriberData {
+    text: string; 
+    chunks: {text: string, timestamp: [number, number | null]}[];
+}
+
+export interface Transcriber {
+    isBusy: boolean;
+    start: (audioData: AudioBuffer | undefined) => void;
+    output?: TranscriberData;
+};
+
+export function useTranscriber(): Transcriber {
+    const [transcript, setTranscript] = useState<TranscriberData | undefined>(undefined);
     const [isBusy, setIsBusy] = useState(false);
     const webWorker = useWorker(event => {
         const message = event.data;
@@ -15,14 +38,16 @@ export function useTranscriber() {
                 break;
             case 'update':
                 // Received partial update
-                setTranscript(JSON.stringify(message.data))
                 console.log('update', message)
+                const updateMessage = message as TranscriberUpdateData;
+                setTranscript({text: updateMessage.data[0], chunks: updateMessage.data[1].chunks})
                 break;
             case 'complete':
                 // Received complete transcript
-                setTranscript(JSON.stringify(message.data))
-                setIsBusy(false);
                 console.log('complete', message)
+                const completeMessage = message as TranscriberCompleteData;
+                setTranscript({text: completeMessage.data.text, chunks: completeMessage.data.chunks})
+                setIsBusy(false);
                 break;
         }
     });
