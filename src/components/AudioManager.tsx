@@ -5,40 +5,43 @@ import { UrlInput } from "./modal/UrlInput";
 import axios from "axios";
 import { TranscribeButton } from "./TranscribeButton";
 import { Transcriber } from "../hooks/useTranscriber";
+import AudioPlayer from "./AudioPlayer";
 
 export function AudioManager(props: {transcriber: Transcriber;}){
     const [progress, setProgress] = useState<number | undefined>(undefined);
     const [audioData, setAudioData] = useState<AudioBuffer | undefined>(undefined);
-    const [url, setUrl] = useState(Constants.DEFAULT_AUDIO_URL);
+    const [url, setUrl] = useState<string | undefined>(undefined);
 
     const isAudioLoading = progress !== undefined;
 
     const downloadAudioFromUrl = async (requestAbortController: AbortController) => {
-        try {
-            setAudioData(undefined);
-            setProgress(0);
-            // Since AudioContext is not available in web worker, we get the audio data first
-            const audioCTX = new AudioContext({ sampleRate: Constants.SAMPLING_RATE })
-            const { data } = await axios.get(url, 
-                { 
-                    signal: requestAbortController.signal, 
-                    responseType: "arraybuffer",
-                    headers: {
-                        'Content-Type': 'audio/wav'
-                    },
-                    onDownloadProgress(progressEvent) {
-                        setProgress(progressEvent.progress || 0);
-                    },
-                }
-            );
-            const decoded = await audioCTX.decodeAudioData(data)
-            setAudioData(decoded);
-        }
-        catch (error) {
-            console.log("Request failed or aborted", error);
-        }
-        finally {
-            setProgress(undefined);
+        if(url){
+            try {
+                setAudioData(undefined);
+                setProgress(0);
+                // Since AudioContext is not available in web worker, we get the audio data first
+                const audioCTX = new AudioContext({ sampleRate: Constants.SAMPLING_RATE })
+                const { data } = await axios.get(url, 
+                    { 
+                        signal: requestAbortController.signal, 
+                        responseType: "arraybuffer",
+                        headers: {
+                            'Content-Type': 'audio/wav'
+                        },
+                        onDownloadProgress(progressEvent) {
+                            setProgress(progressEvent.progress || 0);
+                        },
+                    }
+                );
+                const decoded = await audioCTX.decodeAudioData(data)
+                setAudioData(decoded);
+            }
+            catch (error) {
+                console.log("Request failed or aborted", error);
+            }
+            finally {
+                setProgress(undefined);
+            }
         }
     }
 
@@ -49,14 +52,25 @@ export function AudioManager(props: {transcriber: Transcriber;}){
     }, [url]);
 
     return <>
-        <div className="flex space-x-4 justify-center items-center p-4 w-[41rem] rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
-            < UrlTile icon={<AnchorIcon />} text={"Download from URL"} onUrlUpdate={url => setUrl(url)}/>
-            < Tile icon={<FolderIcon />} text={"Drag and drop a file"}/>    
-            < Tile icon={<MicrophoneIcon />} text={"Record with microphone"}/>
+        <div className="flex flex-col justify-center items-center w-[41rem] rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
+            <div className="flex flex-row space-x-4 py-4 w-full justify-center align-center">
+                < UrlTile icon={<AnchorIcon />} text={"Download from URL"} onUrlUpdate={url => setUrl(url)}/>
+                < VerticalBar />
+                < Tile icon={<FolderIcon />} text={"Drag and drop a file"}/>    
+                < VerticalBar />
+                < Tile icon={<MicrophoneIcon />} text={"Record with microphone"}/>
+            </div>
+            {<AudioDataBar progress={isAudioLoading ? progress : +!!audioData}/>}
         </div>
-        {<AudioDataBar progress={isAudioLoading ? progress : +!!audioData}/>}
-        <TranscribeButton onClick={() => {props.transcriber.start(audioData)}} isLoading={isAudioLoading || props.transcriber.isBusy} />
+        {audioData && <>
+            <TranscribeButton onClick={() => {props.transcriber.start(audioData)}} isLoading={isAudioLoading || props.transcriber.isBusy} /> 
+            <AudioPlayer />
+        </>}
     </>
+}
+
+function VerticalBar(){
+    return <div className="w-[1px] bg-slate-200"></div>
 }
 
 function AudioDataBar(props: {progress: number}){
