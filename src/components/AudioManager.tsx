@@ -9,7 +9,7 @@ import AudioPlayer from "./AudioPlayer";
 
 export function AudioManager(props: {transcriber: Transcriber;}){
     const [progress, setProgress] = useState<number | undefined>(undefined);
-    const [audioData, setAudioData] = useState<AudioBuffer | undefined>(undefined);
+    const [audioData, setAudioData] = useState<{audio: AudioBuffer, url: string} | undefined>(undefined);
     const [url, setUrl] = useState<string | undefined>(undefined);
 
     const isAudioLoading = progress !== undefined;
@@ -32,9 +32,10 @@ export function AudioManager(props: {transcriber: Transcriber;}){
                             setProgress(progressEvent.progress || 0);
                         },
                     }
-                );
-                const decoded = await audioCTX.decodeAudioData(data)
-                setAudioData(decoded);
+                ) as { data: ArrayBuffer;};
+                const blobUrl = URL.createObjectURL(new Blob([data], { type: "audio/*" }));
+                const decoded = await audioCTX.decodeAudioData(data);
+                setAudioData({audio: decoded, url: blobUrl});
             }
             catch (error) {
                 console.log("Request failed or aborted", error);
@@ -63,8 +64,8 @@ export function AudioManager(props: {transcriber: Transcriber;}){
             {<AudioDataBar progress={isAudioLoading ? progress : +!!audioData}/>}
         </div>
         {audioData && <>
-            <TranscribeButton onClick={() => {props.transcriber.start(audioData)}} isLoading={isAudioLoading || props.transcriber.isBusy} /> 
-            <AudioPlayer />
+            <TranscribeButton onClick={() => {props.transcriber.start(audioData.audio)}} isLoading={isAudioLoading || props.transcriber.isBusy} /> 
+            <AudioPlayer audioUrl={audioData.url}/>
         </>}
     </>
 }
