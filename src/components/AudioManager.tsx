@@ -1,22 +1,131 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
+import Constants from "../utils/Constants";
+import Modal from "./Modal";
+import { UrlInput } from "./UrlInput";
+import axios from "axios";
+import { TranscribeButton } from "./TranscribeButton";
+import { Transcriber } from "../hooks/useTranscriber";
 
-export function AudioManager(){
-    return <div className="flex space-x-4 justify-center items-center p-4 w-[41rem] rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
-        < Tile icon={<AnchorIcon />} text={"Download from URL"}/>
-        < Tile icon={<FolderIcon />} text={"Drag and drop a file"}/>    
-        < Tile icon={<MicrophoneIcon />} text={"Record with microphone"}/>
+export function AudioManager(props: {transcriber: Transcriber;}){
+    const [progress, setProgress] = useState<number | undefined>(undefined);
+    const [audioData, setAudioData] = useState<AudioBuffer | undefined>(undefined);
+    const [url, setUrl] = useState(Constants.DEFAULT_AUDIO_URL);
+
+    const isAudioLoading = progress !== undefined;
+
+    const downloadAudioFromUrl = async (requestAbortController: AbortController) => {
+        try {
+            setAudioData(undefined);
+            setProgress(0);
+            // Since AudioContext is not available in web worker, we get the audio data first
+            const audioCTX = new AudioContext({ sampleRate: Constants.SAMPLING_RATE })
+            const { data } = await axios.get(url, 
+                { 
+                    signal: requestAbortController.signal, 
+                    responseType: "arraybuffer",
+                    headers: {
+                        'Content-Type': 'audio/wav'
+                    },
+                    onDownloadProgress(progressEvent) {
+                        setProgress(progressEvent.progress || 0);
+                    },
+                }
+            );
+            const decoded = await audioCTX.decodeAudioData(data)
+            setAudioData(decoded);
+        }
+        catch (error) {
+            console.log("Request failed or aborted", error);
+        }
+        finally {
+            setProgress(undefined);
+        }
+    }
+
+    useEffect(() => {
+        const requestAbortController = new AbortController();
+        downloadAudioFromUrl(requestAbortController);
+        return () => {requestAbortController.abort();}
+    }, [url]);
+
+    return <>
+        <div className="flex space-x-4 justify-center items-center p-4 w-[41rem] rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
+            < UrlTile icon={<AnchorIcon />} text={"Download from URL"} onUrlUpdate={url => setUrl(url)}/>
+            < Tile icon={<FolderIcon />} text={"Drag and drop a file"}/>    
+            < Tile icon={<MicrophoneIcon />} text={"Record with microphone"}/>
+        </div>
+        {<AudioDataBar progress={isAudioLoading ? progress : +!!audioData}/>}
+        <TranscribeButton onClick={() => {props.transcriber.start(audioData)}} isLoading={isAudioLoading || props.transcriber.isBusy} />
+    </>
+}
+
+function AudioDataBar(props: {progress: number}){
+    return <ProgressBar progress={`${Math.round(props.progress * 100)}%`} />
+}
+
+function ProgressBar(props: {progress: string}){
+    return <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+        <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style={{width: props.progress}}></div>
     </div>
 }
 
-function Tile(props: { icon: JSX.Element; text: string }){
-    return <div className="flex flex-col items-center rounded-lg p-4 bg-blue text-slate-500 hover:text-indigo-600 transition-all duration-400">
+function UrlTile(props: { icon: JSX.Element; text: string; onUrlUpdate: (url: string) => void; }){
+    const [showModal, setShowModal] = useState(false);
+
+    const onClick = () => {
+        setShowModal(true);
+    };
+
+    const onClose = () => {
+      setShowModal(false);  
+    };
+
+    const onSubmit = (url: string) => {
+        props.onUrlUpdate(url);
+        onClose();
+    };
+
+    return <>
+        <Tile icon={props.icon} text={props.text} onClick={onClick} />
+        <UrlModal show={showModal} onSubmit={onSubmit} onClose={onClose}/>
+    </>
+}
+
+function UrlModal(props: {show: boolean; onSubmit: (url: string) => void; onClose: () => void;}) {
+    const [url, setUrl] = useState(Constants.DEFAULT_AUDIO_URL);
+
+    const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setUrl(event.target.value);
+    }
+
+    const onSubmit = () => {
+        props.onSubmit(url);
+    };
+
+    return <Modal 
+        show={props.show} 
+        title={"Download from URL"}
+        content={
+            <>
+                {"Enter the URL of the audio file you want to download."}
+                <UrlInput onChange={onChange} value={url} />
+            </>
+        }
+        onClose={props.onClose}
+        submitText={"Download"}    
+        onSubmit={onSubmit}
+    />
+}
+
+function Tile(props: { icon: JSX.Element; text: string; onClick?: () => void; }){
+    return <button onClick={props.onClick} className="flex flex-col items-center rounded-lg p-4 bg-blue text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200">
         <div className="w-7 h-7 mb-3">
             {props.icon}
         </div>
         <div className="break-text text-center text-md w-30">
             {props.text}
         </div>
-    </div>
+    </button>
 }
 
 function AnchorIcon() {
