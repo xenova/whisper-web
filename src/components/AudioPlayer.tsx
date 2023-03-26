@@ -19,7 +19,8 @@ export default function AudioPlayer(props: {audioUrl: string}) {
     // Setup audio player if not yet created and add listeners to update state
     if(!_audioPlayer.current) {
         _audioPlayer.current = new Audio();
-        _audioPlayer.current.ondurationchange = () => setDuration(_audioPlayer.current?.duration || 0);
+        _audioPlayer.current.ondurationchange = () => setDuration(_audioPlayer.current!.duration);
+        _audioPlayer.current.ontimeupdate = () => setCurrentTime(_audioPlayer.current!.currentTime);
         _audioPlayer.current.onplay = () => setStatus(Status.playing);
         _audioPlayer.current.onpause = () => setStatus(Status.paused);
         _audioPlayer.current.onended = () => setStatus(Status.ended);
@@ -28,18 +29,17 @@ export default function AudioPlayer(props: {audioUrl: string}) {
     // Updates src if different (must check, setting this unconditionally interrupts playback)
     if(_audioPlayer.current.src !== props.audioUrl) _audioPlayer.current.src = props.audioUrl;
 
-    // Updates current time (ontimeupdate event was not frequent enough)
+    // Updates current time (ontimeupdate event is not frequent enough)
     useEffect(() => {
         if(status === Status.playing){
             const id = setInterval(() => {
-                setCurrentTime(_audioPlayer.current?.currentTime || 0);
+                setCurrentTime(_audioPlayer.current!.currentTime);
             }, 100);
             return () => clearInterval(id);
         }
         // Reset player at end of clip
         if(status === Status.ended){
-            _audioPlayer.current?.setAttribute("currentTime", "0");
-            setCurrentTime(0);
+            _audioPlayer.current!.currentTime = 0;
             setStatus(Status.reset);
             return;
         }
@@ -57,11 +57,11 @@ export default function AudioPlayer(props: {audioUrl: string}) {
                         </svg>
                         <button onClick={() => {status === Status.playing ? _audioPlayer.current?.pause() : _audioPlayer.current?.play()}}>
                             {status === Status.playing ? 
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
                                     <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM9 8.25a.75.75 0 00-.75.75v6c0 .414.336.75.75.75h.75a.75.75 0 00.75-.75V9a.75.75 0 00-.75-.75H9zm5.25 0a.75.75 0 00-.75.75v6c0 .414.336.75.75.75H15a.75.75 0 00.75-.75V9a.75.75 0 00-.75-.75h-.75z" clipRule="evenodd" />
                                 </svg>
                                 : 
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
                                     <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm14.024-.983a1.125 1.125 0 010 1.966l-5.603 3.113A1.125 1.125 0 019 15.113V8.887c0-.857.921-1.4 1.671-.983l5.603 3.113z" clipRule="evenodd" />
                                 </svg>
                             }
@@ -72,7 +72,12 @@ export default function AudioPlayer(props: {audioUrl: string}) {
                     </div>
                     <div className="flex flex-auto items-center border-l border-slate-200/60 pr-4 pl-6 text-[0.8125rem] leading-5 text-slate-700">
                         <div>{formatAudioTimestamp(currentTime)}</div>
-                        <div className="ml-4 flex flex-auto rounded-full bg-slate-100">
+                        <div onClick={(event) => {
+                            const bounds = event.currentTarget.getBoundingClientRect();
+                            const position = (event.clientX - bounds.x)/bounds.width*duration;
+                            _audioPlayer.current!.currentTime = position;
+                        }}
+                        className="ml-4 flex flex-auto rounded-full bg-slate-100">
                             <div className="h-2 flex-none rounded-l-full rounded-r-[1px] bg-indigo-600" style={{ width: `${progress}%` }}></div>
                             {/* <div className="-my-[0.3125rem] ml-0.5 h-[1.125rem] w-1 rounded-full bg-indigo-600 transition-all duration-500"></div> */}
                         </div>
