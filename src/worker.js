@@ -1,5 +1,5 @@
-
-import { pipeline } from '@xenova/transformers'
+/* eslint-disable camelcase */
+import { pipeline } from "@xenova/transformers";
 
 // Define model factories
 // Ensures only one model is created of each type
@@ -15,11 +15,11 @@ class PipelineFactory {
 
     static async getInstance(progressCallback = null) {
         if (this.task === null || this.model === null) {
-            throw Error("Must set task and model")
+            throw Error("Must set task and model");
         }
         if (this.instance === null) {
             this.instance = pipeline(this.task, this.model, {
-                progress_callback: progressCallback
+                progress_callback: progressCallback,
             });
         }
 
@@ -27,8 +27,7 @@ class PipelineFactory {
     }
 }
 
-
-self.addEventListener('message', async event => {
+self.addEventListener("message", async (event) => {
     const message = event.data;
 
     // Do some work...
@@ -37,39 +36,38 @@ self.addEventListener('message', async event => {
 
     // Send the result back to the main thread
     self.postMessage({
-        type: 'complete',
-        task: 'automatic-speech-recognition',
-        data: transcript
+        type: "complete",
+        task: "automatic-speech-recognition",
+        data: transcript,
     });
 });
 
-
-
 class AutomaticSpeechRecognitionPipelineFactory extends PipelineFactory {
-    static task = 'automatic-speech-recognition';
-    static model = 'openai/whisper-tiny.en';
+    static task = "automatic-speech-recognition";
+    static model = "openai/whisper-tiny.en";
 }
-
-
-
 
 const transcribe = async (audio) => {
     // Actually run transcription
 
-    let transcriber = await AutomaticSpeechRecognitionPipelineFactory.getInstance(data => {
-        self.postMessage({
-            type: 'download',
-            task: 'automatic-speech-recognition',
-            data: data
+    let transcriber =
+        await AutomaticSpeechRecognitionPipelineFactory.getInstance((data) => {
+            self.postMessage({
+                type: "download",
+                task: "automatic-speech-recognition",
+                data: data,
+            });
         });
-    })
 
-
-    const time_precision = transcriber.processor.feature_extractor.config.chunk_length / transcriber.model.config.max_source_positions;
-    let all_chunks = [{
-        tokens: [],
-        finalised: false
-    }];
+    const time_precision =
+        transcriber.processor.feature_extractor.config.chunk_length /
+        transcriber.model.config.max_source_positions;
+    let all_chunks = [
+        {
+            tokens: [],
+            finalised: false,
+        },
+    ];
 
     function chunk_callback(chunk) {
         let last = all_chunks[all_chunks.length - 1];
@@ -82,8 +80,8 @@ const transcribe = async (audio) => {
         if (!chunk.is_last) {
             all_chunks.push({
                 tokens: [],
-                finalised: false
-            })
+                finalised: false,
+            });
         }
     }
 
@@ -99,13 +97,13 @@ const transcribe = async (audio) => {
         let data = transcriber.tokenizer._decode_asr(all_chunks, {
             time_precision: time_precision,
             return_timestamps: true,
-            force_full_sequences: false
+            force_full_sequences: false,
         });
 
         self.postMessage({
-            type: 'update',
-            task: 'automatic-speech-recognition',
-            data: data
+            type: "update",
+            task: "automatic-speech-recognition",
+            data: data,
         });
     }
 
@@ -127,7 +125,6 @@ const transcribe = async (audio) => {
         // Callback functions
         callback_function: callback_function, // after each generation step
         chunk_callback: chunk_callback, // after each chunk is processed
-
     });
 
     return output;
