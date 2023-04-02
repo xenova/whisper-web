@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { formatAudioTimestamp } from "../utils/AudioUtils";
 
 enum Status {
@@ -10,36 +10,46 @@ enum Status {
 }
 
 export default function AudioPlayer(props: {audioUrl: string}) {
-    const _audioPlayer = useRef<HTMLAudioElement>();
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [status, setStatus] = useState(Status.initialised);
     const progress = duration ? currentTime/duration*100 : 0;
 
-    // Setup audio player if not yet created and add listeners to update state
-    if(!_audioPlayer.current) {
-        _audioPlayer.current = new Audio();
-        _audioPlayer.current.ondurationchange = () => setDuration(_audioPlayer.current!.duration);
-        _audioPlayer.current.ontimeupdate = () => setCurrentTime(_audioPlayer.current!.currentTime);
-        _audioPlayer.current.onplay = () => setStatus(Status.playing);
-        _audioPlayer.current.onpause = () => setStatus(Status.paused);
-        _audioPlayer.current.onended = () => setStatus(Status.ended);
-    }
+    // Setup audio player on initial render
+    const createAudioPlayer = () => {
+        const _audioPlayer = new Audio();
+        // TODO: Issue with duration of audio recordings (sometimes duration is not set in metadata by recording component)
+        _audioPlayer.ondurationchange = () => !isNaN(_audioPlayer.duration) && setDuration(_audioPlayer.duration);
+        _audioPlayer.ontimeupdate = () => setCurrentTime(_audioPlayer.currentTime);
+        _audioPlayer.onplay = () => setStatus(Status.playing);
+        _audioPlayer.onpause = () => setStatus(Status.paused);
+        _audioPlayer.onended = () => setStatus(Status.ended);
+        return _audioPlayer;
+    };
 
-    // Updates src if different (must check, setting this unconditionally interrupts playback)
-    if(_audioPlayer.current.src !== props.audioUrl) _audioPlayer.current.src = props.audioUrl;
+    // Using this like a useRef (audioPlayer is initialized and reference never changes - works better with TS)
+    const [audioPlayer] = useState<HTMLAudioElement>(createAudioPlayer());
+
+    // Updates src when url changes
+    useEffect(() => {
+        audioPlayer.src = props.audioUrl;
+        audioPlayer.load();
+        setDuration(audioPlayer.duration);
+        setCurrentTime(0);
+        setStatus(Status.initialised);
+    }, [props.audioUrl]);
 
     // Updates current time (ontimeupdate event is not frequent enough)
     useEffect(() => {
         if(status === Status.playing){
             const id = setInterval(() => {
-                setCurrentTime(_audioPlayer.current!.currentTime);
+                setCurrentTime(audioPlayer.currentTime);
             }, 100);
             return () => clearInterval(id);
         }
         // Reset player at end of clip
         if(status === Status.ended){
-            _audioPlayer.current!.currentTime = 0;
+            audioPlayer.currentTime = 0;
             setStatus(Status.reset);
             return;
         }
@@ -55,7 +65,7 @@ export default function AudioPlayer(props: {audioUrl: string}) {
                             <path d="M3 15.75h.75V21" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
                             <path d="M9 16.5A.75.75 0 0 0 9 15v1.5Zm-2.25-.75V15a.75.75 0 0 0-.75.75h.75Zm0 2.25H6c0 .414.336.75.75.75V18Zm0 2.25a.75.75 0 0 0 0 1.5v-1.5ZM9 15H6.75v1.5H9V15Zm-3 .75V18h1.5v-2.25H6Zm.75 3h1.5v-1.5h-1.5v1.5Zm1.5 1.5h-1.5v1.5h1.5v-1.5ZM9 19.5a.75.75 0 0 1-.75.75v1.5a2.25 2.25 0 0 0 2.25-2.25H9Zm-.75-.75a.75.75 0 0 1 .75.75h1.5a2.25 2.25 0 0 0-2.25-2.25v1.5Z" fill="#64748B"></path>
                         </svg>
-                        <button onClick={() => {status === Status.playing ? _audioPlayer.current?.pause() : _audioPlayer.current?.play()}}>
+                        <button onClick={() => {status === Status.playing ? audioPlayer.pause() : audioPlayer.play()}}>
                             {status === Status.playing ? 
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
                                     <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zM9 8.25a.75.75 0 00-.75.75v6c0 .414.336.75.75.75h.75a.75.75 0 00.75-.75V9a.75.75 0 00-.75-.75H9zm5.25 0a.75.75 0 00-.75.75v6c0 .414.336.75.75.75H15a.75.75 0 00.75-.75V9a.75.75 0 00-.75-.75h-.75z" clipRule="evenodd" />
@@ -75,7 +85,7 @@ export default function AudioPlayer(props: {audioUrl: string}) {
                         <div onClick={(event) => {
                             const bounds = event.currentTarget.getBoundingClientRect();
                             const position = (event.clientX - bounds.x)/bounds.width*duration;
-                            _audioPlayer.current!.currentTime = position;
+                            audioPlayer.currentTime = position;
                         }}
                         className="ml-4 flex flex-auto rounded-full bg-slate-100">
                             <div className="h-2 flex-none rounded-l-full rounded-r-[1px] bg-indigo-600" style={{ width: `${progress}%` }}></div>
