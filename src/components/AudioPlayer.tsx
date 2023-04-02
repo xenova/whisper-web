@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react";
 
-
 export default function AudioPlayer(props: { audioUrl: string }) {
-
     const audioPlayer = useRef<HTMLAudioElement>(null);
     const audioSource = useRef<HTMLSourceElement>(null);
 
@@ -16,8 +14,12 @@ export default function AudioPlayer(props: { audioUrl: string }) {
 
     return (
         <div className='flex relative z-10 p-4 w-full'>
-            <audio ref={audioPlayer} controls className="w-full h-14 rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
-                <source ref={audioSource} type="audio/wav"></source>
+            <audio
+                ref={audioPlayer}
+                controls
+                className='w-full h-14 rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10'
+            >
+                <source ref={audioSource} type='audio/wav'></source>
             </audio>
         </div>
     );
