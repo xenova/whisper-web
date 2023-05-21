@@ -44,7 +44,7 @@ self.addEventListener("message", async (event) => {
 
 class AutomaticSpeechRecognitionPipelineFactory extends PipelineFactory {
     static task = "automatic-speech-recognition";
-    static model = "openai/whisper-tiny.en";
+    static model = "Xenova/whisper-tiny.en";
 }
 
 const transcribe = async (audio) => {
@@ -59,18 +59,19 @@ const transcribe = async (audio) => {
             });
         });
 
-    const time_precision =
-        transcriber.processor.feature_extractor.config.chunk_length /
-        transcriber.model.config.max_source_positions;
-    let all_chunks = [
-        {
-            tokens: [],
-            finalised: false,
-        },
-    ];
+    const time_precision = transcriber.processor.feature_extractor.config.chunk_length / transcriber.model.config.max_source_positions;
+    
+    // Storage for chunks to be processed. Initialise with an empty chunk.
+    let chunks_to_process = [{
+        tokens: [],
+        finalised: false
+    }];
+
+    // Storage for fully-processed and merged chunks
+    let decoded_chunks = [];
 
     function chunk_callback(chunk) {
-        let last = all_chunks[all_chunks.length - 1];
+        let last = chunks_to_process[chunks_to_process.length - 1];
 
         // Overwrite last chunk with new info
         Object.assign(last, chunk);
@@ -78,7 +79,7 @@ const transcribe = async (audio) => {
 
         // Create an empty chunk after, if it not the last chunk
         if (!chunk.is_last) {
-            all_chunks.push({
+            chunks_to_process.push({
                 tokens: [],
                 finalised: false,
             });
@@ -87,14 +88,14 @@ const transcribe = async (audio) => {
 
     // Inject custom callback function to handle merging of chunks
     function callback_function(item) {
-        let last = all_chunks[all_chunks.length - 1];
+        let last = chunks_to_process[chunks_to_process.length - 1];
 
         // Update tokens of last chunk
         last.tokens = [...item[0].output_token_ids];
 
         // Merge text chunks
         // TODO optimise so we don't have to decode all chunks every time
-        let data = transcriber.tokenizer._decode_asr(all_chunks, {
+        let data = transcriber.tokenizer._decode_asr(chunks_to_process, {
             time_precision: time_precision,
             return_timestamps: true,
             force_full_sequences: false,
@@ -105,6 +106,7 @@ const transcribe = async (audio) => {
             task: "automatic-speech-recognition",
             data: data,
         });
+
     }
 
     let output = await transcriber(audio, {

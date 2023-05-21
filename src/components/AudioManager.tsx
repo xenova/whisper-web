@@ -6,7 +6,6 @@ import axios from "axios";
 import { TranscribeButton } from "./TranscribeButton";
 import { Transcriber } from "../hooks/useTranscriber";
 import AudioPlayer from "./AudioPlayer";
-import { AudioRecorder } from "react-audio-voice-recorder";
 
 export enum AudioSource {
     URL = "URL",
@@ -42,30 +41,6 @@ export function AudioManager(props: { transcriber: Transcriber }) {
             url: blobUrl,
             source: AudioSource.URL,
         });
-    };
-
-    const setAudioFromRecording = async (data: Blob) => {
-        resetAudio();
-        setProgress(0);
-        const blobUrl = URL.createObjectURL(data);
-        const fileReader = new FileReader();
-        fileReader.onprogress = (event) => {
-            setProgress(event.loaded / event.total || 0);
-        };
-        fileReader.onloadend = async () => {
-            const audioCTX = new AudioContext({
-                sampleRate: Constants.SAMPLING_RATE,
-            });
-            const arrayBuffer = fileReader.result as ArrayBuffer;
-            const decoded = await audioCTX.decodeAudioData(arrayBuffer);
-            setProgress(undefined);
-            setAudioData({
-                buffer: decoded,
-                url: blobUrl,
-                source: AudioSource.RECORDING,
-            });
-        };
-        fileReader.readAsArrayBuffer(data);
     };
 
     const downloadAudioFromUrl = async (
@@ -107,21 +82,15 @@ export function AudioManager(props: { transcriber: Transcriber }) {
 
     return (
         <>
-            <div className='flex flex-col justify-center items-center w-[41rem] rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10'>
-                <div className='flex flex-row space-x-4 py-4 w-full justify-center align-center'>
+            <div className='flex flex-col justify-center items-center rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10'>
+                <div className='flex flex-row space-x-2 py-2 w-full px-2'>
                     <UrlTile
                         icon={<AnchorIcon />}
-                        text={"Download from URL"}
+                        text={"From URL"}
                         onUrlUpdate={setAudioDownloadUrl}
                     />
                     <VerticalBar />
-                    <Tile icon={<FolderIcon />} text={"Drag and drop a file"} />
-                    <VerticalBar />
-                    <RecordTile
-                        icon={<MicrophoneIcon />}
-                        text={"Record with microphone"}
-                        setAudioData={setAudioFromRecording}
-                    />
+                    <Tile icon={<FolderIcon />} text={"Upload file"} />
                 </div>
                 {
                     <AudioDataBar
@@ -131,13 +100,13 @@ export function AudioManager(props: { transcriber: Transcriber }) {
             </div>
             {audioData && (
                 <>
+                    <AudioPlayer audioUrl={audioData.url} />
                     <TranscribeButton
                         onClick={() => {
                             props.transcriber.start(audioData.buffer);
                         }}
                         isLoading={isAudioLoading || props.transcriber.isBusy}
                     />
-                    <AudioPlayer audioUrl={audioData.url} />
                 </>
             )}
         </>
@@ -154,80 +123,15 @@ function AudioDataBar(props: { progress: number }) {
 
 function ProgressBar(props: { progress: string }) {
     return (
-        <div className='w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700'>
+        <div className='w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700'>
             <div
-                className='bg-blue-600 h-2.5 rounded-full transition-all duration-500'
+                className='bg-blue-600 h-1.5 rounded-full transition-all duration-100'
                 style={{ width: props.progress }}
             ></div>
         </div>
     );
 }
 
-function RecordTile(props: {
-    icon: JSX.Element;
-    text: string;
-    setAudioData: (data: Blob) => void;
-}) {
-    const [showModal, setShowModal] = useState(false);
-
-    const onClick = () => {
-        setShowModal(true);
-    };
-
-    const onClose = () => {
-        setShowModal(false);
-    };
-
-    const onSubmit = (data: Blob | undefined) => {
-        if (data) {
-            props.setAudioData(data);
-            onClose();
-        }
-    };
-
-    return (
-        <>
-            <Tile icon={props.icon} text={props.text} onClick={onClick} />
-            <RecordModal
-                show={showModal}
-                onSubmit={onSubmit}
-                onClose={onClose}
-            />
-        </>
-    );
-}
-
-function RecordModal(props: {
-    show: boolean;
-    onSubmit: (data: Blob | undefined) => void;
-    onClose: () => void;
-}) {
-    const [audioBlob, setAudioBlob] = useState<Blob>();
-
-    const onRecordingComplete = (blob: Blob) => {
-        setAudioBlob(blob);
-    };
-
-    const onSubmit = () => {
-        props.onSubmit(audioBlob);
-    };
-
-    return (
-        <Modal
-            show={props.show}
-            title={"Record Audio"}
-            content={
-                <>
-                    {"Record audio using a microphone"}
-                    <AudioRecorder onRecordingComplete={onRecordingComplete} />
-                </>
-            }
-            onClose={props.onClose}
-            submitText={"Download"}
-            onSubmit={onSubmit}
-        />
-    );
-}
 
 function UrlTile(props: {
     icon: JSX.Element;
@@ -275,15 +179,15 @@ function UrlModal(props: {
     return (
         <Modal
             show={props.show}
-            title={"Download from URL"}
+            title={"From URL"}
             content={
                 <>
-                    {"Enter the URL of the audio file you want to download."}
+                    {"Enter the URL of the audio file you want to load."}
                     <UrlInput onChange={onChange} value={url} />
                 </>
             }
             onClose={props.onClose}
-            submitText={"Download"}
+            submitText={"Load"}
             onSubmit={onSubmit}
         />
     );
@@ -297,9 +201,9 @@ function Tile(props: {
     return (
         <button
             onClick={props.onClick}
-            className='flex flex-col items-center rounded-lg p-4 bg-blue text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200'
+            className='flex items-center justify-center rounded-lg p-2 bg-blue text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200'
         >
-            <div className='w-7 h-7 mb-3'>{props.icon}</div>
+            <div className='w-7 h-7 mr-2'>{props.icon}</div>
             <div className='break-text text-center text-md w-30'>
                 {props.text}
             </div>
@@ -338,24 +242,6 @@ function FolderIcon() {
                 strokeLinecap='round'
                 strokeLinejoin='round'
                 d='M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776'
-            />
-        </svg>
-    );
-}
-
-function MicrophoneIcon() {
-    return (
-        <svg
-            xmlns='http://www.w3.org/2000/svg'
-            fill='none'
-            viewBox='0 0 24 24'
-            strokeWidth={1.5}
-            stroke='currentColor'
-        >
-            <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                d='M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z'
             />
         </svg>
     );

@@ -11,8 +11,8 @@ function App() {
                 <h1 className='text-4xl font-extrabold tracking-tight text-slate-900 sm:text-7xl'>
                     Whisper Web
                 </h1>
-                <h2 className='mt-3 mb-3 text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl'>
-                    AI speech-to-text directly in your browser
+                <h2 className='mt-3 mb-5 text-1xl font-semibold tracking-tight text-slate-900 sm:text-2xl'>
+                    ML-powered audio transcription directly in your browser
                 </h2>
                 <AudioManager transcriber={transcriber} />
                 <Transcript transcribedData={transcriber.output} />
