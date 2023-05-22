@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useWorker } from "./useWorker";
+import Constants from "../utils/Constants";
 
 interface TranscriberUpdateData {
     data: [
@@ -25,6 +26,12 @@ export interface Transcriber {
     isBusy: boolean;
     start: (audioData: AudioBuffer | undefined) => void;
     output?: TranscriberData;
+    model: string;
+    onModelChange: (model: string) => void;
+    subtask: string;
+    onSubtaskChange: (subtask: string) => void;
+    language?: string;
+    onLanguageChange: (language: string) => void;
 }
 
 export function useTranscriber(): Transcriber {
@@ -65,11 +72,33 @@ export function useTranscriber(): Transcriber {
         }
     });
 
-    const postAudioData = useCallback(
+    const [model, setModel] = useState<string>(Constants.DEFAULT_MODEL);
+    const [subtask, setSubtask] = useState<string>(Constants.DEFAULT_SUBTASK);
+    const [language, setLanguage] = useState<string>(Constants.DEFAULT_LANGUAGE);
+
+    const onModelChange = useCallback((value: string) => {
+        setModel(value);
+    }, []);
+
+    const onSubtaskChange = useCallback((value: string) => {
+        setSubtask(value);
+    }, []);
+
+    const onLanguageChange = useCallback((value: string) => {
+        setLanguage(value);
+    }, []);
+
+    const postRequest = useCallback(
         async (audioData: AudioBuffer | undefined) => {
             if (audioData) {
+                setTranscript(undefined);
                 setIsBusy(true);
-                webWorker.postMessage({ audio: audioData.getChannelData(0) });
+                webWorker.postMessage({
+                    audio: audioData.getChannelData(0),
+                    model: model,
+                    subtask: subtask,
+                    language: language,
+                });
             }
         },
         [webWorker],
@@ -78,10 +107,16 @@ export function useTranscriber(): Transcriber {
     const transcriber = useMemo(() => {
         return {
             isBusy,
-            start: postAudioData,
+            start: postRequest,
             output: transcript,
+            model: model,
+            onModelChange: onModelChange,
+            subtask: subtask,
+            onSubtaskChange: onSubtaskChange,
+            language: language,
+            onLanguageChange: onLanguageChange,
         };
-    }, [isBusy, postAudioData, transcript]);
+    }, [isBusy, postRequest, transcript, model, subtask, language]);
 
     return transcriber;
 }

@@ -24,10 +24,10 @@ export default function AudioPlayer(props: { audioUrl: string }) {
 
     // Updates current time (ontimeupdate event is not frequent enough)
     useEffect(() => {
-        if(audioPlayer.current === null) return;
+        if (audioPlayer.current === null) return;
 
         let c = audioPlayer.current;
-        
+
         // Reset player at end of clip
         if (status === Status.ended) {
             c.currentTime = 0;
@@ -37,13 +37,9 @@ export default function AudioPlayer(props: { audioUrl: string }) {
     }, [status]);
 
     return (
-        <div className='flex'>
-            <div className='relative z-10 p-4'>
-                <div className='h-14 flex w-[41rem] rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10'>
-                    <audio ref={audioPlayer} controls className="w-full h-full">
-                    </audio>
-                </div>
-            </div>
+        <div className='flex relative z-10 p-4 w-full'>
+            <audio ref={audioPlayer} controls className="w-full h-14 rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
+            </audio>
         </div>
     );
 }

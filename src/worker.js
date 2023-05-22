@@ -32,7 +32,7 @@ self.addEventListener("message", async (event) => {
 
     // Do some work...
     // TODO use message data
-    let transcript = await transcribe(message.audio);
+    let transcript = await transcribe(message.audio, message.model, message.subtask, message.language);
 
     // Send the result back to the main thread
     self.postMessage({
@@ -44,14 +44,28 @@ self.addEventListener("message", async (event) => {
 
 class AutomaticSpeechRecognitionPipelineFactory extends PipelineFactory {
     static task = "automatic-speech-recognition";
-    static model = "Xenova/whisper-tiny.en";
+    static model = null;
 }
 
-const transcribe = async (audio) => {
-    // Actually run transcription
+const transcribe = async (audio, model, subtask, language) => {
+    // TODO use subtask and language
 
+    const p = AutomaticSpeechRecognitionPipelineFactory;
+
+    if (p.model !== model) {
+        // Invalidate model if different
+        p.model = `Xenova/${model}`;
+
+        if (p.instance !== null) {
+            (await p.getInstance()).dispose();
+            p.instance = null;
+        }
+    }
+
+
+    // Actually run transcription
     let transcriber =
-        await AutomaticSpeechRecognitionPipelineFactory.getInstance((data) => {
+        await p.getInstance((data) => {
             self.postMessage({
                 type: "download",
                 task: "automatic-speech-recognition",
@@ -60,7 +74,7 @@ const transcribe = async (audio) => {
         });
 
     const time_precision = transcriber.processor.feature_extractor.config.chunk_length / transcriber.model.config.max_source_positions;
-    
+
     // Storage for chunks to be processed. Initialise with an empty chunk.
     let chunks_to_process = [{
         tokens: [],
