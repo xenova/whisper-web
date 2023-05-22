@@ -56,9 +56,6 @@ export function AudioManager(props: {
                 const { data } = (await axios.get(audioDownloadUrl, {
                     signal: requestAbortController.signal,
                     responseType: "arraybuffer",
-                    headers: {
-                        "Content-Type": "audio/wav",
-                    },
                     onDownloadProgress(progressEvent) {
                         setProgress(progressEvent.progress || 0);
                     },
@@ -90,17 +87,23 @@ export function AudioManager(props: {
                     <UrlTile
                         icon={<AnchorIcon />}
                         text={"From URL"}
-                        onUrlUpdate={setAudioDownloadUrl}
+                        onUrlUpdate={(e) => {
+                            props.transcriber.onInputChange();
+                            setAudioDownloadUrl(e);
+                        }}
                     />
                     <VerticalBar />
                     <FileTile
                         icon={<FolderIcon />}
                         text={"From file"}
-                        onFileUpdate={(decoded, blobUrl) => setAudioData({
-                            buffer: decoded,
-                            url: blobUrl,
-                            source: AudioSource.FILE,
-                        })}
+                        onFileUpdate={(decoded, blobUrl) => {
+                            props.transcriber.onInputChange();
+                            setAudioData({
+                                buffer: decoded,
+                                url: blobUrl,
+                                source: AudioSource.FILE,
+                            })
+                        }}
                     />
                 </div>
                 {
@@ -118,7 +121,7 @@ export function AudioManager(props: {
                             onClick={() => {
                                 props.transcriber.start(audioData.buffer);
                             }}
-                            isModelLoading={false}
+                            isModelLoading={props.transcriber.isModelLoading}
                             // isAudioLoading || 
                             isTranscribing={props.transcriber.isBusy}
                         />

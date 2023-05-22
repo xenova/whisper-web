@@ -14,12 +14,12 @@ export function ModelSelect(props: {
                     props.transcriber.onModelChange(e.target.value);
                 }}
             >
-                <option>whisper-tiny.en (61MB)</option>
-                <option>whisper-tiny (61MB)</option>
-                <option>whisper-base.en (103MB)</option>
-                <option>whisper-base (103MB)</option>
-                <option>whisper-small.en (290MB)</option>
-                <option>whisper-small (290MB)</option>
+                <option value={"whisper-tiny.en"}>whisper-tiny.en (61MB)</option>
+                <option value={"whisper-tiny"}>whisper-tiny (61MB)</option>
+                <option value={"whisper-base.en"}>whisper-base.en (103MB)</option>
+                <option value={"whisper-base"}>whisper-base (103MB)</option>
+                <option value={"whisper-small.en"}>whisper-small.en (290MB)</option>
+                <option value={"whisper-small"}>whisper-small (290MB)</option>
             </select>
         </>
     );

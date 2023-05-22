@@ -36,7 +36,7 @@ self.addEventListener("message", async (event) => {
 
     // Send the result back to the main thread
     self.postMessage({
-        type: "complete",
+        status: "complete",
         task: "automatic-speech-recognition",
         data: transcript,
     });
@@ -50,11 +50,12 @@ class AutomaticSpeechRecognitionPipelineFactory extends PipelineFactory {
 const transcribe = async (audio, model, subtask, language) => {
     // TODO use subtask and language
 
-    const p = AutomaticSpeechRecognitionPipelineFactory;
+    const modelName = `Xenova/${model}`;
 
-    if (p.model !== model) {
+    const p = AutomaticSpeechRecognitionPipelineFactory;
+    if (p.model !== modelName) {
         // Invalidate model if different
-        p.model = `Xenova/${model}`;
+        p.model = modelName;
 
         if (p.instance !== null) {
             (await p.getInstance()).dispose();
@@ -64,14 +65,9 @@ const transcribe = async (audio, model, subtask, language) => {
 
 
     // Actually run transcription
-    let transcriber =
-        await p.getInstance((data) => {
-            self.postMessage({
-                type: "download",
-                task: "automatic-speech-recognition",
-                data: data,
-            });
-        });
+    let transcriber = await p.getInstance((data) => {
+        self.postMessage(data);
+    });
 
     const time_precision = transcriber.processor.feature_extractor.config.chunk_length / transcriber.model.config.max_source_positions;
 
@@ -81,8 +77,8 @@ const transcribe = async (audio, model, subtask, language) => {
         finalised: false
     }];
 
-    // Storage for fully-processed and merged chunks
-    let decoded_chunks = [];
+    // TODO: Storage for fully-processed and merged chunks
+    // let decoded_chunks = [];
 
     function chunk_callback(chunk) {
         let last = chunks_to_process[chunks_to_process.length - 1];
@@ -116,7 +112,7 @@ const transcribe = async (audio, model, subtask, language) => {
         });
 
         self.postMessage({
-            type: "update",
+            status: "update",
             task: "automatic-speech-recognition",
             data: data,
         });

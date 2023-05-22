@@ -23,7 +23,9 @@ export interface TranscriberData {
 }
 
 export interface Transcriber {
+    onInputChange: () => void;
     isBusy: boolean;
+    isModelLoading: boolean;
     start: (audioData: AudioBuffer | undefined) => void;
     output?: TranscriberData;
     model: string;
@@ -39,18 +41,20 @@ export function useTranscriber(): Transcriber {
         undefined,
     );
     const [isBusy, setIsBusy] = useState(false);
+    const [isModelLoading, setIsModelLoading] = useState(false);
+
     const webWorker = useWorker((event) => {
         const message = event.data;
         // Update the state with the result
-        switch (message.type) {
-            case "download":
+        switch (message.status) {
+            case "progress":
                 // Received a download message
                 // TODO add download/loading bar
-                console.log("download", message);
+                // console.log("progress", message);
                 break;
             case "update":
                 // Received partial update
-                console.log("update", message);
+                // console.log("update", message);
                 // eslint-disable-next-line no-case-declarations
                 const updateMessage = message as TranscriberUpdateData;
                 setTranscript({
@@ -60,7 +64,7 @@ export function useTranscriber(): Transcriber {
                 break;
             case "complete":
                 // Received complete transcript
-                console.log("complete", message);
+                // console.log("complete", message);
                 // eslint-disable-next-line no-case-declarations
                 const completeMessage = message as TranscriberCompleteData;
                 setTranscript({
@@ -68,6 +72,16 @@ export function useTranscriber(): Transcriber {
                     chunks: completeMessage.data.chunks,
                 });
                 setIsBusy(false);
+                break;
+
+            case 'initiate':
+                setIsModelLoading(true);
+                break;
+            case 'ready':
+                setIsModelLoading(false);
+                break;
+            default:
+                // initiate/download/done
                 break;
         }
     });
@@ -88,6 +102,10 @@ export function useTranscriber(): Transcriber {
         setLanguage(value);
     }, []);
 
+    const onInputChange = useCallback(() => {
+        setTranscript(undefined);
+    }, []);
+
     const postRequest = useCallback(
         async (audioData: AudioBuffer | undefined) => {
             if (audioData) {
@@ -101,12 +119,14 @@ export function useTranscriber(): Transcriber {
                 });
             }
         },
-        [webWorker],
+        [webWorker, model, subtask, language],
     );
 
     const transcriber = useMemo(() => {
         return {
+            onInputChange,
             isBusy,
+            isModelLoading,
             start: postRequest,
             output: transcript,
             model: model,
@@ -116,7 +136,7 @@ export function useTranscriber(): Transcriber {
             language: language,
             onLanguageChange: onLanguageChange,
         };
-    }, [isBusy, postRequest, transcript, model, subtask, language]);
+    }, [isBusy, isModelLoading, postRequest, transcript, model, subtask, language]);
 
     return transcriber;
 }
