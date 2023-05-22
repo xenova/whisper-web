@@ -1,30 +1,35 @@
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    isLoading: boolean;
+    isModelLoading: boolean;
+    isTranscribing: boolean;
 }
 
 export function TranscribeButton(props: Props): JSX.Element {
-    const { isLoading, onClick, ...buttonProps } = props;
+    const { isModelLoading, isTranscribing, onClick, ...buttonProps } = props;
     return (
         <button
             {...buttonProps}
             onClick={
-                onClick
-                    ? (event) => {
-                          if (!isLoading) {
-                              onClick(event);
-                          }
-                      }
-                    : undefined
+                (event) => {
+                    if (onClick && !isTranscribing && !isModelLoading) {
+                        onClick(event);
+                    }
+                }
             }
-            disabled={isLoading}
+            disabled={isTranscribing}
             className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 inline-flex items-center'
         >
-            {isLoading ? <Spinner /> : "Transcribe Audio"}
+            {
+                isModelLoading || isTranscribing
+                    ? <Spinner text={isModelLoading ? "Loading..." : "Transcribing..."} />
+                    : "Transcribe Audio"
+            }
         </button>
     );
 }
 
-export function Spinner(): JSX.Element {
+export function Spinner(props: {
+    text: string
+}): JSX.Element {
     return (
         <div role='status'>
             <svg
@@ -44,7 +49,7 @@ export function Spinner(): JSX.Element {
                     fill='currentColor'
                 />
             </svg>
-            {"Loading..."}
+            {props.text}
         </div>
     );
 }

@@ -10,7 +10,6 @@ import AudioPlayer from "./AudioPlayer";
 export enum AudioSource {
     URL = "URL",
     FILE = "FILE",
-    RECORDING = "RECORDING",
 }
 
 export function AudioManager(props: { transcriber: Transcriber }) {
@@ -90,7 +89,15 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                         onUrlUpdate={setAudioDownloadUrl}
                     />
                     <VerticalBar />
-                    <Tile icon={<FolderIcon />} text={"Upload file"} />
+                    <FileTile
+                        icon={<FolderIcon />}
+                        text={"From file"}
+                        onFileUpdate={(decoded, blobUrl) => setAudioData({
+                            buffer: decoded,
+                            url: blobUrl,
+                            source: AudioSource.FILE,
+                        })}
+                    />
                 </div>
                 {
                     <AudioDataBar
@@ -105,7 +112,9 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                         onClick={() => {
                             props.transcriber.start(audioData.buffer);
                         }}
-                        isLoading={isAudioLoading || props.transcriber.isBusy}
+                        isModelLoading={false}
+                        // isAudioLoading || 
+                        isTranscribing={props.transcriber.isBusy}
                     />
                 </>
             )}
@@ -123,9 +132,9 @@ function AudioDataBar(props: { progress: number }) {
 
 function ProgressBar(props: { progress: string }) {
     return (
-        <div className='w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700'>
+        <div className='w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700'>
             <div
-                className='bg-blue-600 h-1.5 rounded-full transition-all duration-100'
+                className='bg-blue-600 h-1 rounded-full transition-all duration-100'
                 style={{ width: props.progress }}
             ></div>
         </div>
@@ -192,6 +201,56 @@ function UrlModal(props: {
         />
     );
 }
+
+
+function FileTile(props: {
+    icon: JSX.Element;
+    text: string;
+    onFileUpdate: (decoded: AudioBuffer, blobUrl: string) => void;
+}) {
+
+    // const audioPlayer = useRef<HTMLAudioElement>(null);
+
+    // Create hidden input element
+    let elem = document.createElement('input');
+    elem.type = "file";
+    elem.oninput = (event) => {
+        let files = (event.target as HTMLInputElement).files;
+        if (!files) return;
+
+        // Make sure we have files to use
+
+        // Create a blob that we can use as an src for our audio element
+        const urlObj = URL.createObjectURL(files[0]);
+
+        const reader = new FileReader();
+        reader.addEventListener('load', async (e) => {
+            const arrayBuffer = e.target?.result as ArrayBuffer; // Get the ArrayBuffer
+            if (!arrayBuffer) return;
+            console.log('arrayBuffer', arrayBuffer)
+
+            const audioCTX = new AudioContext({
+                sampleRate: Constants.SAMPLING_RATE,
+            });
+
+            const decoded = await audioCTX.decodeAudioData(arrayBuffer);
+
+            props.onFileUpdate(decoded, urlObj)
+        });
+        reader.readAsArrayBuffer(files[0]);
+
+
+        // Reset files
+        elem.value = '';
+    };
+
+    return (
+        <>
+            <Tile icon={props.icon} text={props.text} onClick={() => elem.click()} />
+        </>
+    );
+}
+
 
 function Tile(props: {
     icon: JSX.Element;
