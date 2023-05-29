@@ -63,8 +63,7 @@ const transcribe = async (audio, model, subtask, language) => {
         }
     }
 
-
-    // Actually run transcription
+    // Load transcriber model
     let transcriber = await p.getInstance((data) => {
         self.postMessage(data);
     });
@@ -119,6 +118,7 @@ const transcribe = async (audio, model, subtask, language) => {
 
     }
 
+    // Actually run transcription
     let output = await transcriber(audio, {
         max_new_tokens: Infinity,
 
