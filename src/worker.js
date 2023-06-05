@@ -1,5 +1,8 @@
 /* eslint-disable camelcase */
-import { pipeline } from "@xenova/transformers";
+import { pipeline, env } from "@xenova/transformers";
+
+// Disable local models
+env.allowLocalModels = false;
 
 // Define model factories
 // Ensures only one model is created of each type
