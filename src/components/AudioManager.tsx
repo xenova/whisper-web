@@ -6,6 +6,7 @@ import AudioPlayer from "./AudioPlayer";
 import { TranscribeButton } from "./TranscribeButton";
 import Constants from "../utils/Constants";
 import { Transcriber } from "../hooks/useTranscriber";
+import Progress from './Progress';
 
 function titleCase(str: string) {
     str = str.toLowerCase()
@@ -245,6 +246,16 @@ export function AudioManager(props: {
                             icon={<SettingsIcon />
                             } />
                     </div>
+                    <div className='relative z-10 p-4 w-full'>
+                        {props.transcriber.progressItems.length > 0 && (
+                            <label>Loading model files... (only run once)</label>
+                        )}
+                        {props.transcriber.progressItems.map(data => (
+                            <div key={data.file}>
+                                <Progress text={data.file} percentage={data.progress} />
+                            </div>
+                        ))}
+                    </div>
                 </>
             )}
         </>
@@ -313,10 +324,10 @@ function SettingsModal(props: {
                     >
                         {
                             Object.keys(models)
-                            .filter(key=> props.transcriber.quantized || (
-                                // @ts-ignore
-                                models[key].length == 2
-                            ))
+                                .filter(key => props.transcriber.quantized || (
+                                    // @ts-ignore
+                                    models[key].length == 2
+                                ))
                                 .map(key => (
                                     <option key={key} value={key}>{
                                         `whisper-${key}${props.transcriber.multilingual ? '' : '.en'

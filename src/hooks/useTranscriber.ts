@@ -2,6 +2,15 @@ import { useCallback, useMemo, useState } from "react";
 import { useWorker } from "./useWorker";
 import Constants from "../utils/Constants";
 
+interface ProgressItem {
+    file: string;
+    loaded: number;
+    progress: number;
+    total: number;
+    name: string;
+    status: string;
+}
+
 interface TranscriberUpdateData {
     data: [
         string,
@@ -26,6 +35,7 @@ export interface Transcriber {
     onInputChange: () => void;
     isBusy: boolean;
     isModelLoading: boolean;
+    progressItems: ProgressItem[];
     start: (audioData: AudioBuffer | undefined) => void;
     output?: TranscriberData;
     model: string;
@@ -45,14 +55,22 @@ export function useTranscriber(): Transcriber {
     const [isBusy, setIsBusy] = useState(false);
     const [isModelLoading, setIsModelLoading] = useState(false);
 
+    const [progressItems, setProgressItems] = useState<ProgressItem[]>([]);
+
     const webWorker = useWorker((event) => {
         const message = event.data;
         // Update the state with the result
         switch (message.status) {
             case "progress":
-                // Received a download message
-                // TODO add download/loading bar
-                // console.log("progress", message);
+                // Model file progress: update one of the progress items.
+                setProgressItems(
+                    prev => prev.map(item => {
+                        if (item.file === message.file) {
+                            return { ...item, progress: message.progress }
+                        }
+                        return item;
+                    })
+                );
                 break;
             case "update":
                 // Received partial update
@@ -77,7 +95,9 @@ export function useTranscriber(): Transcriber {
                 break;
 
             case 'initiate':
+                // Model file start load: add a new progress item to the list.
                 setIsModelLoading(true);
+                setProgressItems(prev => [...prev, message]);
                 break;
             case 'ready':
                 setIsModelLoading(false);
@@ -86,6 +106,13 @@ export function useTranscriber(): Transcriber {
                 setIsBusy(false);
                 alert(`${message.data.message} This is most likely because you are using Safari on an M1/M2 Mac. Please try again from Chrome, Firefox, or Edge.\n\nIf this is not the case, please file a bug report.`);
                 break;
+            case 'done':
+                // Model file loaded: remove the progress item from the list.
+                setProgressItems(
+                    prev => prev.filter(item => item.file !== message.file)
+                );
+                break;
+
             default:
                 // initiate/download/done
                 break;
@@ -125,6 +152,7 @@ export function useTranscriber(): Transcriber {
             onInputChange,
             isBusy,
             isModelLoading,
+            progressItems,
             start: postRequest,
             output: transcript,
             model,
@@ -138,7 +166,7 @@ export function useTranscriber(): Transcriber {
             language,
             setLanguage,
         };
-    }, [isBusy, isModelLoading, postRequest, transcript, model, multilingual, quantized, subtask, language]);
+    }, [isBusy, isModelLoading, progressItems, postRequest, transcript, model, multilingual, quantized, subtask, language]);
 
     return transcriber;
 }
