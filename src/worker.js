@@ -9,20 +9,20 @@ env.allowLocalModels = false;
 class PipelineFactory {
     static task = null;
     static model = null;
+    static quantized = null;
     static instance = null;
 
-    constructor(tokenizer, model) {
+    constructor(tokenizer, model, quantized) {
         this.tokenizer = tokenizer;
         this.model = model;
+        this.quantized = quantized;
     }
 
-    static async getInstance(progressCallback = null) {
-        if (this.task === null || this.model === null) {
-            throw Error("Must set task and model");
-        }
+    static async getInstance(progress_callback = null) {
         if (this.instance === null) {
             this.instance = pipeline(this.task, this.model, {
-                progress_callback: progressCallback,
+                quantized: this.quantized,
+                progress_callback,
             });
         }
 
@@ -35,7 +35,8 @@ self.addEventListener("message", async (event) => {
 
     // Do some work...
     // TODO use message data
-    let transcript = await transcribe(message.audio, message.model, message.subtask, message.language);
+    let transcript = await transcribe(message.audio, message.model, message.model, message.quantized, message.subtask, message.language);
+    if (transcript === null) return;
 
     // Send the result back to the main thread
     self.postMessage({
@@ -48,17 +49,20 @@ self.addEventListener("message", async (event) => {
 class AutomaticSpeechRecognitionPipelineFactory extends PipelineFactory {
     static task = "automatic-speech-recognition";
     static model = null;
+    static quantized = null;
 }
 
-const transcribe = async (audio, model, subtask, language) => {
+
+const transcribe = async (audio, model, multilingual, quantized, subtask, language) => {
     // TODO use subtask and language
 
-    const modelName = `Xenova/${model}`;
+    const modelName = `Xenova/whisper-${model}${multilingual ? '' : '.en'}`;
 
     const p = AutomaticSpeechRecognitionPipelineFactory;
-    if (p.model !== modelName) {
+    if (p.model !== modelName || p.quantized !== quantized) {
         // Invalidate model if different
         p.model = modelName;
+        p.quantized = quantized;
 
         if (p.instance !== null) {
             (await p.getInstance()).dispose();
@@ -123,7 +127,6 @@ const transcribe = async (audio, model, subtask, language) => {
 
     // Actually run transcription
     let output = await transcriber(audio, {
-        max_new_tokens: Infinity,
 
         // Greedy
         top_k: 0,
@@ -133,6 +136,10 @@ const transcribe = async (audio, model, subtask, language) => {
         chunk_length_s: 30,
         stride_length_s: 5,
 
+        // Language and task
+        language: language,
+        task: subtask,
+
         // Return timestamps
         return_timestamps: true,
         force_full_sequences: false,
@@ -140,6 +147,13 @@ const transcribe = async (audio, model, subtask, language) => {
         // Callback functions
         callback_function: callback_function, // after each generation step
         chunk_callback: chunk_callback, // after each chunk is processed
+    }).catch((error) => {
+        self.postMessage({
+            status: "error",
+            task: "automatic-speech-recognition",
+            data: error,
+        });
+        return null;
     });
 
     return output;

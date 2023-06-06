@@ -29,17 +29,19 @@ export interface Transcriber {
     start: (audioData: AudioBuffer | undefined) => void;
     output?: TranscriberData;
     model: string;
-    onModelChange: (model: string) => void;
+    setModel: (model: string) => void;
+    multilingual: boolean;
+    setMultilingual: (model: boolean) => void;
+    quantized: boolean;
+    setQuantized: (model: boolean) => void;
     subtask: string;
-    onSubtaskChange: (subtask: string) => void;
+    setSubtask: (subtask: string) => void;
     language?: string;
-    onLanguageChange: (language: string) => void;
+    setLanguage: (language: string) => void;
 }
 
 export function useTranscriber(): Transcriber {
-    const [transcript, setTranscript] = useState<TranscriberData | undefined>(
-        undefined,
-    );
+    const [transcript, setTranscript] = useState<TranscriberData | undefined>(undefined);
     const [isBusy, setIsBusy] = useState(false);
     const [isModelLoading, setIsModelLoading] = useState(false);
 
@@ -80,6 +82,10 @@ export function useTranscriber(): Transcriber {
             case 'ready':
                 setIsModelLoading(false);
                 break;
+            case 'error':
+                setIsBusy(false);
+                alert(`${message.data.message} This is most likely because you are using Safari on an M1/M2 Mac. Please try again from Chrome, Firefox, or Edge.\n\nIf this is not the case, please file a bug report.`);
+                break;
             default:
                 // initiate/download/done
                 break;
@@ -88,19 +94,9 @@ export function useTranscriber(): Transcriber {
 
     const [model, setModel] = useState<string>(Constants.DEFAULT_MODEL);
     const [subtask, setSubtask] = useState<string>(Constants.DEFAULT_SUBTASK);
+    const [quantized, setQuantized] = useState<boolean>(Constants.DEFAULT_QUANTIZED);
+    const [multilingual, setMultilingual] = useState<boolean>(Constants.DEFAULT_MULTILINGUAL);
     const [language, setLanguage] = useState<string>(Constants.DEFAULT_LANGUAGE);
-
-    const onModelChange = useCallback((value: string) => {
-        setModel(value);
-    }, []);
-
-    const onSubtaskChange = useCallback((value: string) => {
-        setSubtask(value);
-    }, []);
-
-    const onLanguageChange = useCallback((value: string) => {
-        setLanguage(value);
-    }, []);
 
     const onInputChange = useCallback(() => {
         setTranscript(undefined);
@@ -113,13 +109,15 @@ export function useTranscriber(): Transcriber {
                 setIsBusy(true);
                 webWorker.postMessage({
                     audio: audioData.getChannelData(0),
-                    model: model,
-                    subtask: subtask,
-                    language: language,
+                    model,
+                    multilingual,
+                    quantized,
+                    subtask: multilingual ? subtask : null,
+                    language: (multilingual && language !== 'auto') ? language : null,
                 });
             }
         },
-        [webWorker, model, subtask, language],
+        [webWorker, model, multilingual, quantized, subtask, language],
     );
 
     const transcriber = useMemo(() => {
@@ -129,14 +127,18 @@ export function useTranscriber(): Transcriber {
             isModelLoading,
             start: postRequest,
             output: transcript,
-            model: model,
-            onModelChange: onModelChange,
-            subtask: subtask,
-            onSubtaskChange: onSubtaskChange,
-            language: language,
-            onLanguageChange: onLanguageChange,
+            model,
+            setModel,
+            multilingual,
+            setMultilingual,
+            quantized,
+            setQuantized,
+            subtask,
+            setSubtask,
+            language,
+            setLanguage,
         };
-    }, [isBusy, isModelLoading, postRequest, transcript, model, subtask, language]);
+    }, [isBusy, isModelLoading, postRequest, transcript, model, multilingual, quantized, subtask, language]);
 
     return transcriber;
 }
