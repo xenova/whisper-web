@@ -373,8 +373,8 @@ function SettingsModal(props: {
                                         props.transcriber.setSubtask(e.target.value);
                                     }}
                                 >
-                                    <option>Transcribe</option>
-                                    <option>Translate (to English)</option>
+                                    <option value={"transcribe"}>Transcribe</option>
+                                    <option value={"translate"}>Translate (to English)</option>
                                 </select>
                             </>
                         )
