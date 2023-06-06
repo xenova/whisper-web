@@ -1,3 +1,5 @@
+import { useRef, useEffect } from 'react';
+
 import { TranscriberData } from "../hooks/useTranscriber";
 import { formatAudioTimestamp } from "../utils/AudioUtils";
 
@@ -6,8 +8,22 @@ interface Props {
 }
 
 export default function Transcript({ transcribedData }: Props) {
+    const divRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to the bottom when the component updates
+    useEffect(() => {
+        if (divRef.current) {
+            const diff = Math.abs(divRef.current.offsetHeight + divRef.current.scrollTop - divRef.current.scrollHeight);
+
+            if (diff <= 64) {
+                // We're close enough to the bottom, so scroll to the bottom
+                divRef.current.scrollTop = divRef.current.scrollHeight;
+            }
+        }
+    });
+
     return (
-        <div className='w-full flex flex-col my-2 p-4 max-h-[20rem] overflow-y-auto'>
+        <div ref={divRef} className='w-full flex flex-col my-2 p-4 max-h-[20rem] overflow-y-auto'>
             {transcribedData &&
                 transcribedData.chunks.map((chunk, i) => (
                     <div
