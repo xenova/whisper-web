@@ -27,6 +27,7 @@ interface TranscriberCompleteData {
 }
 
 export interface TranscriberData {
+    isBusy: boolean;
     text: string;
     chunks: { text: string; timestamp: [number, number | null] }[];
 }
@@ -78,6 +79,7 @@ export function useTranscriber(): Transcriber {
                 // eslint-disable-next-line no-case-declarations
                 const updateMessage = message as TranscriberUpdateData;
                 setTranscript({
+                    isBusy: true,
                     text: updateMessage.data[0],
                     chunks: updateMessage.data[1].chunks,
                 });
@@ -88,6 +90,7 @@ export function useTranscriber(): Transcriber {
                 // eslint-disable-next-line no-case-declarations
                 const completeMessage = message as TranscriberCompleteData;
                 setTranscript({
+                    isBusy: false,
                     text: completeMessage.data.text,
                     chunks: completeMessage.data.chunks,
                 });

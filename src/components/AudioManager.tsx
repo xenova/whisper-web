@@ -246,16 +246,18 @@ export function AudioManager(props: {
                             icon={<SettingsIcon />
                             } />
                     </div>
-                    <div className='relative z-10 p-4 w-full'>
-                        {props.transcriber.progressItems.length > 0 && (
-                            <label>Loading model files... (only run once)</label>
-                        )}
-                        {props.transcriber.progressItems.map(data => (
-                            <div key={data.file}>
-                                <Progress text={data.file} percentage={data.progress} />
+                    {
+                        props.transcriber.progressItems.length > 0 && (
+                            <div className='relative z-10 p-4 w-full'>
+                                <label>Loading model files... (only run once)</label>
+                                {props.transcriber.progressItems.map(data => (
+                                    <div key={data.file}>
+                                        <Progress text={data.file} percentage={data.progress} />
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        )
+                    }
                 </>
             )}
         </>

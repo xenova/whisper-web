@@ -10,6 +10,22 @@ interface Props {
 export default function Transcript({ transcribedData }: Props) {
     const divRef = useRef<HTMLDivElement>(null);
 
+    const handleButtonClick = () => {
+        let jsonData = JSON.stringify(transcribedData?.chunks ?? {}, null, 2);
+
+        // post-process the JSON to make it more readable
+        const regex = /(    "timestamp": )\[\s+(\S+)\s+(\S+)\s+\]/gm;
+        jsonData = jsonData.replace(regex, '$1[$2 $3]');
+
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'transcript.json';
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     // Scroll to the bottom when the component updates
     useEffect(() => {
         if (divRef.current) {
@@ -35,7 +51,13 @@ export default function Transcript({ transcribedData }: Props) {
                         </div>
                         {chunk.text}
                     </div>
-                ))}
+                ))
+            }
+            {transcribedData && !transcribedData.isBusy && (
+                <div className='w-full text-right'>
+                    <button onClick={handleButtonClick} className='text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 inline-flex items-center'>Export JSON</button>
+                </div>
+            )}
         </div>
     );
 }
