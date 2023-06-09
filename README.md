@@ -4,7 +4,10 @@ ML-powered speech recognition directly in your browser! Built with [🤗 Transfo
 
 Check out the demo site [here](https://huggingface.co/spaces/Xenova/whisper-web). 
 
-<video src="https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/whisper-web-demo.mp4" type="video/mp4" width=600></video>
+
+
+https://github.com/xenova/whisper-web/assets/26504141/7a7b4cb7-1d25-42ac-9ace-5dba65f33e45
+
 
 ## Running locally
 
