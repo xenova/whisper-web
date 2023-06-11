@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useWhisper } from "@albertsyh/use-whisper";
+import useWhisper from "@albertsyh/use-whisper";
 import Modal from "./modal/Modal";
 import { UrlInput } from "./modal/UrlInput";
 import AudioPlayer from "./AudioPlayer";
@@ -460,6 +460,7 @@ function RecordTile(props: {
     onRecord: (blob: Blob, arrayBuffer: ArrayBuffer) => Promise<void>;
 }) {
     const { startRecording, stopRecording, recording } = useWhisper({
+        showLogs: true,
         autoTranscribe: false,
         onRecord: async function onRecord(blob, arrayBuffer) {
             if (blob && arrayBuffer) {

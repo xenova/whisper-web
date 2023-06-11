@@ -14,7 +14,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@albertsyh/use-whisper": "^0.2.8",
+    "@albertsyh/use-whisper": "^0.2.12",
     "@headlessui/react": "^1.7.13",
     "@xenova/transformers": "^2.2.0",
     "axios": "^1.3.4",
