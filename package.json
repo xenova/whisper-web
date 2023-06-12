@@ -18,7 +18,6 @@
     "@xenova/transformers": "^2.2.0",
     "axios": "^1.3.4",
     "react": "^18.2.0",
-    "react-audio-voice-recorder": "^1.2.1",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {

@@ -7,7 +7,7 @@ import { TranscribeButton } from "./TranscribeButton";
 import Constants from "../utils/Constants";
 import { Transcriber } from "../hooks/useTranscriber";
 import Progress from "./Progress";
-import { AudioRecorder } from "react-audio-voice-recorder";
+import AudioRecorder from "./AudioRecorder";
 
 function titleCase(str: string) {
     str = str.toLowerCase();
@@ -246,7 +246,7 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                     <VerticalBar />
                     <RecordTile
                         icon={<MicrophoneIcon />}
-                        text={"From recording"}
+                        text={"Record"}
                         setAudioData={setAudioFromRecording}
                     />
                 </div>
