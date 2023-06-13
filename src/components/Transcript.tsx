@@ -20,11 +20,14 @@ export default function Transcript({ transcribedData }: Props) {
     };
     const exportTXT = () => {
         let chunks = transcribedData?.chunks ?? [];
-        let text = chunks.map((chunk) => chunk.text).join('').trim();
+        let text = chunks
+            .map((chunk) => chunk.text)
+            .join("")
+            .trim();
 
         const blob = new Blob([text], { type: "text/plain" });
         saveBlob(blob, "transcript.txt");
-    }
+    };
     const exportJSON = () => {
         let jsonData = JSON.stringify(transcribedData?.chunks ?? [], null, 2);
 
@@ -41,8 +44,8 @@ export default function Transcript({ transcribedData }: Props) {
         if (divRef.current) {
             const diff = Math.abs(
                 divRef.current.offsetHeight +
-                divRef.current.scrollTop -
-                divRef.current.scrollHeight,
+                    divRef.current.scrollTop -
+                    divRef.current.scrollHeight,
             );
 
             if (diff <= 64) {

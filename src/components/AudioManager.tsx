@@ -132,7 +132,13 @@ export enum AudioSource {
 export function AudioManager(props: { transcriber: Transcriber }) {
     const [progress, setProgress] = useState<number | undefined>(undefined);
     const [audioData, setAudioData] = useState<
-        { buffer: AudioBuffer; url: string; source: AudioSource; mimeType: string } | undefined
+        | {
+              buffer: AudioBuffer;
+              url: string;
+              source: AudioSource;
+              mimeType: string;
+          }
+        | undefined
     >(undefined);
     const [audioDownloadUrl, setAudioDownloadUrl] = useState<
         string | undefined
@@ -145,7 +151,10 @@ export function AudioManager(props: { transcriber: Transcriber }) {
         setAudioDownloadUrl(undefined);
     };
 
-    const setAudioFromDownload = async (data: ArrayBuffer, mimeType: string) => {
+    const setAudioFromDownload = async (
+        data: ArrayBuffer,
+        mimeType: string,
+    ) => {
         const audioCTX = new AudioContext({
             sampleRate: Constants.SAMPLING_RATE,
         });
@@ -199,7 +208,10 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                     onDownloadProgress(progressEvent) {
                         setProgress(progressEvent.progress || 0);
                     },
-                })) as { data: ArrayBuffer, headers: { "content-type": string } };
+                })) as {
+                    data: ArrayBuffer;
+                    headers: { "content-type": string };
+                };
 
                 let mimeType = headers["content-type"];
                 if (!mimeType || mimeType === "audio/wave") {
@@ -247,22 +259,23 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                                 buffer: decoded,
                                 url: blobUrl,
                                 source: AudioSource.FILE,
-                                mimeType: mimeType
+                                mimeType: mimeType,
                             });
                         }}
                     />
-                    {navigator.mediaDevices && (<>
-                        <VerticalBar />
-                        <RecordTile
-                            icon={<MicrophoneIcon />}
-                            text={"Record"}
-                            setAudioData={(e) => {
-                                props.transcriber.onInputChange();
-                                setAudioFromRecording(e);
-                            }}
-                        />
-                    </>)}
-
+                    {navigator.mediaDevices && (
+                        <>
+                            <VerticalBar />
+                            <RecordTile
+                                icon={<MicrophoneIcon />}
+                                text={"Record"}
+                                setAudioData={(e) => {
+                                    props.transcriber.onInputChange();
+                                    setAudioFromRecording(e);
+                                }}
+                            />
+                        </>
+                    )}
                 </div>
                 {
                     <AudioDataBar
@@ -272,7 +285,10 @@ export function AudioManager(props: { transcriber: Transcriber }) {
             </div>
             {audioData && (
                 <>
-                    <AudioPlayer audioUrl={audioData.url} mimeType={audioData.mimeType} />
+                    <AudioPlayer
+                        audioUrl={audioData.url}
+                        mimeType={audioData.mimeType}
+                    />
 
                     <div className='relative w-full flex justify-center items-center'>
                         <TranscribeButton
@@ -379,13 +395,14 @@ function SettingsModal(props: {
                                     models[key].length == 2,
                             )
                             .map((key) => (
-                                <option key={key} value={key}>{`whisper-${key}${props.transcriber.multilingual ? "" : ".en"
-                                    } (${
+                                <option key={key} value={key}>{`whisper-${key}${
+                                    props.transcriber.multilingual ? "" : ".en"
+                                } (${
                                     // @ts-ignore
                                     models[key][
-                                    props.transcriber.quantized ? 0 : 1
+                                        props.transcriber.quantized ? 0 : 1
                                     ]
-                                    }MB)`}</option>
+                                }MB)`}</option>
                             ))}
                     </select>
                     <div className='flex justify-between items-center mb-3 px-1'>
@@ -458,7 +475,7 @@ function SettingsModal(props: {
                 </>
             }
             onClose={props.onClose}
-            onSubmit={() => { }}
+            onSubmit={() => {}}
         />
     );
 }
@@ -545,7 +562,11 @@ function UrlModal(props: {
 function FileTile(props: {
     icon: JSX.Element;
     text: string;
-    onFileUpdate: (decoded: AudioBuffer, blobUrl: string, mimeType: string) => void;
+    onFileUpdate: (
+        decoded: AudioBuffer,
+        blobUrl: string,
+        mimeType: string,
+    ) => void;
 }) {
     // const audioPlayer = useRef<HTMLAudioElement>(null);
 

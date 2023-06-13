@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 
-export default function AudioPlayer(props: { audioUrl: string, mimeType: string }) {
+export default function AudioPlayer(props: {
+    audioUrl: string;
+    mimeType: string;
+}) {
     const audioPlayer = useRef<HTMLAudioElement>(null);
     const audioSource = useRef<HTMLSourceElement>(null);
 
