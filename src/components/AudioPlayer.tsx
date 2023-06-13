@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export default function AudioPlayer(props: { audioUrl: string }) {
+export default function AudioPlayer(props: { audioUrl: string, mimeType: string }) {
     const audioPlayer = useRef<HTMLAudioElement>(null);
     const audioSource = useRef<HTMLSourceElement>(null);
 
@@ -19,7 +19,7 @@ export default function AudioPlayer(props: { audioUrl: string }) {
                 controls
                 className='w-full h-14 rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10'
             >
-                <source ref={audioSource} type='audio/wav'></source>
+                <source ref={audioSource} type={props.mimeType}></source>
             </audio>
         </div>
     );
