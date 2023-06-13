@@ -36,16 +36,10 @@ export default function AudioRecorder(props: {
                 }
                 if (mediaRecorder.state === "inactive") {
                     const duration = Date.now() - startTime;
-                    console.log(`Recording duration: ${duration}ms`);
 
                     // Received a stop event
                     let blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-
-
-                    // TODO FIX BLOB:
-                    console.log('Fixing blob duration...');
                     blob = await webmFixDuration(blob, duration, blob.type)
-                    console.log('fixed blob duration...');
 
                     setRecordedBlob(blob);
                     props.onRecordingComplete(blob);
