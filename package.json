@@ -9,8 +9,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx,json}",
-    "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx,json}'",
-    "format": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
+    "lint:fix": "eslint --fix src/**/*.{js,jsx,ts,tsx,json}",
+    "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,md,json} --config ./.prettierrc",
     "tsc": "tsc"
   },
   "dependencies": {
