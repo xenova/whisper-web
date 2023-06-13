@@ -243,12 +243,18 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                             });
                         }}
                     />
-                    <VerticalBar />
-                    <RecordTile
-                        icon={<MicrophoneIcon />}
-                        text={"Record"}
-                        setAudioData={setAudioFromRecording}
-                    />
+                    {navigator.mediaDevices && (<>
+                        <VerticalBar />
+                        <RecordTile
+                            icon={<MicrophoneIcon />}
+                            text={"Record"}
+                            setAudioData={(e) => {
+                                props.transcriber.onInputChange();
+                                setAudioFromRecording(e);
+                            }}
+                        />
+                    </>)}
+
                 </div>
                 {
                     <AudioDataBar
@@ -365,14 +371,13 @@ function SettingsModal(props: {
                                     models[key].length == 2,
                             )
                             .map((key) => (
-                                <option key={key} value={key}>{`whisper-${key}${
-                                    props.transcriber.multilingual ? "" : ".en"
-                                } (${
+                                <option key={key} value={key}>{`whisper-${key}${props.transcriber.multilingual ? "" : ".en"
+                                    } (${
                                     // @ts-ignore
                                     models[key][
-                                        props.transcriber.quantized ? 0 : 1
+                                    props.transcriber.quantized ? 0 : 1
                                     ]
-                                }MB)`}</option>
+                                    }MB)`}</option>
                             ))}
                     </select>
                     <div className='flex justify-between items-center mb-3 px-1'>
@@ -419,9 +424,6 @@ function SettingsModal(props: {
                                     );
                                 }}
                             >
-                                <option key={-1} value={"auto"}>
-                                    Auto-detect
-                                </option>
                                 {Object.keys(LANGUAGES).map((key, i) => (
                                     <option key={key} value={key}>
                                         {names[i]}
@@ -448,7 +450,7 @@ function SettingsModal(props: {
                 </>
             }
             onClose={props.onClose}
-            onSubmit={() => {}}
+            onSubmit={() => { }}
         />
     );
 }
