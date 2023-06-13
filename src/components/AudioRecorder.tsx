@@ -3,6 +3,22 @@ import { useState, useEffect, useRef } from 'react';
 import { formatAudioTimestamp } from '../utils/AudioUtils';
 import { webmFixDuration } from '../utils/BlobFix';
 
+function getMimeType() {
+    const types = [
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg',
+        'audio/wav',
+        'audio/aac'
+    ];
+    for (let i = 0; i < types.length; i++) {
+        if (MediaRecorder.isTypeSupported(types[i])) {
+            return types[i];
+        }
+    }
+    return undefined;
+}
+
 export default function AudioRecorder(props: {
     onRecordingComplete: (blob: Blob) => void;
 }) {
@@ -27,7 +43,9 @@ export default function AudioRecorder(props: {
                 streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
             }
 
-            const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType: 'audio/webm' });
+            const mimeType = getMimeType();
+            const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType });
+
             mediaRecorderRef.current = mediaRecorder;
 
             mediaRecorder.addEventListener('dataavailable', async (event) => {
@@ -38,8 +56,11 @@ export default function AudioRecorder(props: {
                     const duration = Date.now() - startTime;
 
                     // Received a stop event
-                    let blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-                    blob = await webmFixDuration(blob, duration, blob.type)
+                    let blob = new Blob(chunksRef.current, { type: mimeType });
+
+                    if (mimeType === 'audio/webm') {
+                        blob = await webmFixDuration(blob, duration, blob.type)
+                    }
 
                     setRecordedBlob(blob);
                     props.onRecordingComplete(blob);
