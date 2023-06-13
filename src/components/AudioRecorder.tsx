@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { formatAudioTimestamp } from '../utils/AudioUtils';
+import { webmFixDuration } from '../utils/BlobFix';
 
 export default function AudioRecorder(props: {
     onRecordingComplete: (blob: Blob) => void;
@@ -19,20 +20,33 @@ export default function AudioRecorder(props: {
         // Reset recording (if any)
         setRecordedBlob(null);
 
+        let startTime = Date.now();
+
         try {
             if (!streamRef.current) {
                 streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
             }
-            const mediaRecorder = new MediaRecorder(streamRef.current);
+
+            const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType: 'audio/webm' });
             mediaRecorderRef.current = mediaRecorder;
 
-            mediaRecorder.addEventListener('dataavailable', (event) => {
+            mediaRecorder.addEventListener('dataavailable', async (event) => {
                 if (event.data.size > 0) {
                     chunksRef.current.push(event.data);
                 }
                 if (mediaRecorder.state === "inactive") {
+                    const duration = Date.now() - startTime;
+                    console.log(`Recording duration: ${duration}ms`);
+
                     // Received a stop event
-                    let blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+                    let blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+
+
+                    // TODO FIX BLOB:
+                    console.log('Fixing blob duration...');
+                    blob = await webmFixDuration(blob, duration, blob.type)
+                    console.log('fixed blob duration...');
+
                     setRecordedBlob(blob);
                     props.onRecordingComplete(blob);
 
@@ -83,21 +97,12 @@ export default function AudioRecorder(props: {
         }
     };
 
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.play().then(
-                x => audioRef.current?.pause()
-            );
-        }
-    }, [recordedBlob]);
-
     return (
         <div className='flex flex-col justify-center items-center'>
             <button
                 type='button'
-                className={`m-2 inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition-all duration-200 ${
-                    recording ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
-                }`}
+                className={`m-2 inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition-all duration-200 ${recording ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+                    }`}
                 onClick={handleToggleRecording}
             >
                 {recording ? `Stop Recording (${formatAudioTimestamp(duration)})` : 'Start Recording'}
