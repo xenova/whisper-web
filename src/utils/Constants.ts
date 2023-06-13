@@ -28,7 +28,7 @@ export default {
     }.wav`,
     DEFAULT_MODEL: "tiny",
     DEFAULT_SUBTASK: "transcribe",
-    DEFAULT_LANGUAGE: "auto",
+    DEFAULT_LANGUAGE: "english",
     DEFAULT_QUANTIZED: isMobileOrTablet,
     DEFAULT_MULTILINGUAL: false,
 };
