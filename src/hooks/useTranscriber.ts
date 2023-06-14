@@ -52,7 +52,9 @@ export interface Transcriber {
 }
 
 export function useTranscriber(): Transcriber {
-    const [transcript, setTranscript] = useState<TranscriberData | undefined>(undefined);
+    const [transcript, setTranscript] = useState<TranscriberData | undefined>(
+        undefined,
+    );
     const [isBusy, setIsBusy] = useState(false);
     const [isModelLoading, setIsModelLoading] = useState(false);
 
@@ -64,13 +66,13 @@ export function useTranscriber(): Transcriber {
         switch (message.status) {
             case "progress":
                 // Model file progress: update one of the progress items.
-                setProgressItems(
-                    prev => prev.map(item => {
+                setProgressItems((prev) =>
+                    prev.map((item) => {
                         if (item.file === message.file) {
-                            return { ...item, progress: message.progress }
+                            return { ...item, progress: message.progress };
                         }
                         return item;
-                    })
+                    }),
                 );
                 break;
             case "update":
@@ -97,22 +99,24 @@ export function useTranscriber(): Transcriber {
                 setIsBusy(false);
                 break;
 
-            case 'initiate':
+            case "initiate":
                 // Model file start load: add a new progress item to the list.
                 setIsModelLoading(true);
-                setProgressItems(prev => [...prev, message]);
+                setProgressItems((prev) => [...prev, message]);
                 break;
-            case 'ready':
+            case "ready":
                 setIsModelLoading(false);
                 break;
-            case 'error':
+            case "error":
                 setIsBusy(false);
-                alert(`${message.data.message} This is most likely because you are using Safari on an M1/M2 Mac. Please try again from Chrome, Firefox, or Edge.\n\nIf this is not the case, please file a bug report.`);
+                alert(
+                    `${message.data.message} This is most likely because you are using Safari on an M1/M2 Mac. Please try again from Chrome, Firefox, or Edge.\n\nIf this is not the case, please file a bug report.`,
+                );
                 break;
-            case 'done':
+            case "done":
                 // Model file loaded: remove the progress item from the list.
-                setProgressItems(
-                    prev => prev.filter(item => item.file !== message.file)
+                setProgressItems((prev) =>
+                    prev.filter((item) => item.file !== message.file),
                 );
                 break;
 
@@ -124,9 +128,15 @@ export function useTranscriber(): Transcriber {
 
     const [model, setModel] = useState<string>(Constants.DEFAULT_MODEL);
     const [subtask, setSubtask] = useState<string>(Constants.DEFAULT_SUBTASK);
-    const [quantized, setQuantized] = useState<boolean>(Constants.DEFAULT_QUANTIZED);
-    const [multilingual, setMultilingual] = useState<boolean>(Constants.DEFAULT_MULTILINGUAL);
-    const [language, setLanguage] = useState<string>(Constants.DEFAULT_LANGUAGE);
+    const [quantized, setQuantized] = useState<boolean>(
+        Constants.DEFAULT_QUANTIZED,
+    );
+    const [multilingual, setMultilingual] = useState<boolean>(
+        Constants.DEFAULT_MULTILINGUAL,
+    );
+    const [language, setLanguage] = useState<string>(
+        Constants.DEFAULT_LANGUAGE,
+    );
 
     const onInputChange = useCallback(() => {
         setTranscript(undefined);
@@ -143,7 +153,8 @@ export function useTranscriber(): Transcriber {
                     multilingual,
                     quantized,
                     subtask: multilingual ? subtask : null,
-                    language: (multilingual && language !== 'auto') ? language : null,
+                    language:
+                        multilingual && language !== "auto" ? language : null,
                 });
             }
         },
@@ -169,7 +180,18 @@ export function useTranscriber(): Transcriber {
             language,
             setLanguage,
         };
-    }, [isBusy, isModelLoading, progressItems, postRequest, transcript, model, multilingual, quantized, subtask, language]);
+    }, [
+        isBusy,
+        isModelLoading,
+        progressItems,
+        postRequest,
+        transcript,
+        model,
+        multilingual,
+        quantized,
+        subtask,
+        language,
+    ]);
 
     return transcriber;
 }

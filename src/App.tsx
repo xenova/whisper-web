@@ -17,6 +17,16 @@ function App() {
                 <AudioManager transcriber={transcriber} />
                 <Transcript transcribedData={transcriber.output} />
             </div>
+
+            <div className='absolute bottom-4'>
+                Made with{" "}
+                <a
+                    className='underline'
+                    href='https://github.com/xenova/transformers.js'
+                >
+                    🤗 Transformers.js
+                </a>
+            </div>
         </div>
     );
 }

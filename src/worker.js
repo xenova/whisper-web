@@ -35,7 +35,14 @@ self.addEventListener("message", async (event) => {
 
     // Do some work...
     // TODO use message data
-    let transcript = await transcribe(message.audio, message.model, message.model, message.quantized, message.subtask, message.language);
+    let transcript = await transcribe(
+        message.audio,
+        message.model,
+        message.model,
+        message.quantized,
+        message.subtask,
+        message.language,
+    );
     if (transcript === null) return;
 
     // Send the result back to the main thread
@@ -52,11 +59,17 @@ class AutomaticSpeechRecognitionPipelineFactory extends PipelineFactory {
     static quantized = null;
 }
 
-
-const transcribe = async (audio, model, multilingual, quantized, subtask, language) => {
+const transcribe = async (
+    audio,
+    model,
+    multilingual,
+    quantized,
+    subtask,
+    language,
+) => {
     // TODO use subtask and language
 
-    const modelName = `Xenova/whisper-${model}${multilingual ? '' : '.en'}`;
+    const modelName = `Xenova/whisper-${model}${multilingual ? "" : ".en"}`;
 
     const p = AutomaticSpeechRecognitionPipelineFactory;
     if (p.model !== modelName || p.quantized !== quantized) {
@@ -75,13 +88,17 @@ const transcribe = async (audio, model, multilingual, quantized, subtask, langua
         self.postMessage(data);
     });
 
-    const time_precision = transcriber.processor.feature_extractor.config.chunk_length / transcriber.model.config.max_source_positions;
+    const time_precision =
+        transcriber.processor.feature_extractor.config.chunk_length /
+        transcriber.model.config.max_source_positions;
 
     // Storage for chunks to be processed. Initialise with an empty chunk.
-    let chunks_to_process = [{
-        tokens: [],
-        finalised: false
-    }];
+    let chunks_to_process = [
+        {
+            tokens: [],
+            finalised: false,
+        },
+    ];
 
     // TODO: Storage for fully-processed and merged chunks
     // let decoded_chunks = [];
@@ -122,12 +139,10 @@ const transcribe = async (audio, model, multilingual, quantized, subtask, langua
             task: "automatic-speech-recognition",
             data: data,
         });
-
     }
 
     // Actually run transcription
     let output = await transcriber(audio, {
-
         // Greedy
         top_k: 0,
         do_sample: false,

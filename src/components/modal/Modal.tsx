@@ -6,6 +6,7 @@ export interface Props {
     onClose: () => void;
     onSubmit: () => void;
     submitText?: string;
+    submitEnabled?: boolean;
     title: string | JSX.Element;
     content: string | JSX.Element;
 }
@@ -17,6 +18,7 @@ export default function Modal({
     title,
     content,
     submitText,
+    submitEnabled = true,
 }: Props) {
     return (
         <Transition appear show={show} as={Fragment}>
@@ -56,16 +58,24 @@ export default function Modal({
                                 </div>
 
                                 <div className='mt-4 flex flex-row-reverse'>
-                                    {
-                                        submitText &&
+                                    {submitText && (
                                         <button
                                             type='button'
-                                            className='inline-flex ml-4 justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-indigo-100 hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition-all duration-300'
+                                            disabled={!submitEnabled}
+                                            className={`inline-flex ml-4 justify-center rounded-md border border-transparent ${
+                                                submitEnabled
+                                                    ? "bg-indigo-600"
+                                                    : "bg-grey-300"
+                                            } px-4 py-2 text-sm font-medium text-indigo-100 ${
+                                                submitEnabled
+                                                    ? "hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                                                    : ""
+                                            } transition-all duration-300`}
                                             onClick={onSubmit}
                                         >
                                             {submitText}
                                         </button>
-                                    }
+                                    )}
                                     <button
                                         type='button'
                                         className='inline-flex justify-center rounded-md border border-transparent bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-900 hover:bg-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition-all duration-300'
@@ -74,7 +84,6 @@ export default function Modal({
                                         Close
                                     </button>
                                 </div>
-
                             </Dialog.Panel>
                         </Transition.Child>
                     </div>
