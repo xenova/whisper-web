@@ -130,6 +130,7 @@ export enum AudioSource {
 }
 
 export function AudioManager(props: { transcriber: Transcriber }) {
+    const [triedExample, setTryExample] = useState<boolean>(false);
     const [progress, setProgress] = useState<number | undefined>(undefined);
     const [audioData, setAudioData] = useState<
         | {
@@ -283,6 +284,20 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                     />
                 }
             </div>
+            {!triedExample && (
+                <>
+                    <span
+                        className='underline py-2 cursor-pointer'
+                        onClick={(e) => {
+                            props.transcriber.onInputChange();
+                            setAudioDownloadUrl(Constants.DEFAULT_AUDIO_URL);
+                            setTryExample(true);
+                        }}
+                    >
+                        Try example
+                    </span>
+                </>
+            )}
             {audioData && (
                 <>
                     <AudioPlayer
