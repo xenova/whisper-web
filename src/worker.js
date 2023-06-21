@@ -38,7 +38,7 @@ self.addEventListener("message", async (event) => {
     let transcript = await transcribe(
         message.audio,
         message.model,
-        message.model,
+        message.multilingual,
         message.quantized,
         message.subtask,
         message.language,
