@@ -368,10 +368,10 @@ function SettingsModal(props: {
     const names = Object.values(LANGUAGES).map(titleCase);
 
     const models = {
-        tiny: [61, 231],
-        base: [103, 398],
-        small: [290],
-        medium: [833],
+        tiny: [41, 152],
+        base: [77, 291],
+        small: [249],
+        medium: [776],
     };
     return (
         <Modal
