@@ -368,12 +368,6 @@ function SettingsModal(props: {
     const names = Object.values(LANGUAGES).map(titleCase);
 
     const models = {
-        // Original checkpoints
-        'Xenova/whisper-tiny': [41, 152],
-        'Xenova/whisper-base': [77, 291],
-        'Xenova/whisper-small': [249],
-        'Xenova/whisper-medium': [776],
-
         // Distil Whisper (English-only)
         'distil-whisper/distil-medium.en': [402],
         'distil-whisper/distil-large-v2': [767],
@@ -393,25 +387,10 @@ function SettingsModal(props: {
                         }}
                     >
                         {Object.keys(models)
-                            .filter(
-                                (key) =>
-                                    props.transcriber.quantized ||
-                                    // @ts-ignore
-                                    models[key].length == 2,
-                            )
-                            .filter(
-                                (key) => (
-                                    !props.transcriber.multilingual || !key.startsWith('distil-whisper/')
-                                )
-                            )
                             .map((key) => (
-                                <option key={key} value={key}>{`${key}${
-                                    (props.transcriber.multilingual || key.startsWith('distil-whisper/')) ? "" : ".en"
-                                } (${
+                                <option key={key} value={key}>{`${key} (${
                                     // @ts-ignore
-                                    models[key][
-                                        props.transcriber.quantized ? 0 : 1
-                                    ]
+                                    models[key][0]
                                 }MB)`}</option>
                             ))}
                     </select>
@@ -420,6 +399,7 @@ function SettingsModal(props: {
                             <input
                                 id='multilingual'
                                 type='checkbox'
+                                disabled={true}
                                 checked={props.transcriber.multilingual}
                                 onChange={(e) => {
                                     props.transcriber.setMultilingual(
@@ -428,13 +408,14 @@ function SettingsModal(props: {
                                 }}
                             ></input>
                             <label htmlFor={"multilingual"} className='ms-1'>
-                                Multilingual
+                                Multilingual (coming soon)
                             </label>
                         </div>
                         <div className='flex'>
                             <input
                                 id='quantize'
                                 type='checkbox'
+                                disabled={true}
                                 checked={props.transcriber.quantized}
                                 onChange={(e) => {
                                     props.transcriber.setQuantized(
