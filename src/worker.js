@@ -67,9 +67,13 @@ const transcribe = async (
     subtask,
     language,
 ) => {
-    // TODO use subtask and language
 
-    const modelName = `Xenova/whisper-${model}${multilingual ? "" : ".en"}`;
+    const isDistilWhisper = model.startsWith("distil-whisper/");
+
+    let modelName = model;
+    if (!isDistilWhisper && !multilingual) {
+        modelName += ".en"
+    }
 
     const p = AutomaticSpeechRecognitionPipelineFactory;
     if (p.model !== modelName || p.quantized !== quantized) {
@@ -148,8 +152,8 @@ const transcribe = async (
         do_sample: false,
 
         // Sliding window
-        chunk_length_s: 30,
-        stride_length_s: 5,
+        chunk_length_s: isDistilWhisper ? 20 : 30,
+        stride_length_s: isDistilWhisper ? 3 : 5,
 
         // Language and task
         language: language,

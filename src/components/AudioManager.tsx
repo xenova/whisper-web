@@ -368,10 +368,15 @@ function SettingsModal(props: {
     const names = Object.values(LANGUAGES).map(titleCase);
 
     const models = {
-        tiny: [41, 152],
-        base: [77, 291],
-        small: [249],
-        medium: [776],
+        // Original checkpoints
+        'Xenova/whisper-tiny': [41, 152],
+        'Xenova/whisper-base': [77, 291],
+        'Xenova/whisper-small': [249],
+        'Xenova/whisper-medium': [776],
+
+        // Distil Whisper (English-only)
+        'distil-whisper/distil-medium.en': [402],
+        'distil-whisper/distil-large-v2': [767],
     };
     return (
         <Modal
@@ -394,9 +399,14 @@ function SettingsModal(props: {
                                     // @ts-ignore
                                     models[key].length == 2,
                             )
+                            .filter(
+                                (key) => (
+                                    !props.transcriber.multilingual || !key.startsWith('distil-whisper/')
+                                )
+                            )
                             .map((key) => (
-                                <option key={key} value={key}>{`whisper-${key}${
-                                    props.transcriber.multilingual ? "" : ".en"
+                                <option key={key} value={key}>{`${key}${
+                                    (props.transcriber.multilingual || key.startsWith('distil-whisper/')) ? "" : ".en"
                                 } (${
                                     // @ts-ignore
                                     models[key][
