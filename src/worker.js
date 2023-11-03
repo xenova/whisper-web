@@ -23,6 +23,9 @@ class PipelineFactory {
             this.instance = pipeline(this.task, this.model, {
                 quantized: this.quantized,
                 progress_callback,
+
+                // For medium models, we need to load the `no_attentions` revision to avoid running out of memory
+                revision: this.model.includes("/whisper-medium") ? "no_attentions" : "main"
             });
         }
 
