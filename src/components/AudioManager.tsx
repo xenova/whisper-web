@@ -369,6 +369,7 @@ function SettingsModal(props: {
 
     const models = {
         // Distil Whisper (English-only)
+        'distil-whisper/distil-small.en': [172],
         'distil-whisper/distil-medium.en': [402],
         'distil-whisper/distil-large-v2': [767],
     };
