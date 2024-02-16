@@ -37,7 +37,6 @@ self.addEventListener("message", async (event) => {
     const message = event.data;
 
     // Do some work...
-    // TODO use message data
     let transcript = await transcribe(
         message.audio,
         message.model,
@@ -70,12 +69,11 @@ const transcribe = async (
     subtask,
     language,
 ) => {
-
     const isDistilWhisper = model.startsWith("distil-whisper/");
 
     let modelName = model;
     if (!isDistilWhisper && !multilingual) {
-        modelName += ".en"
+        modelName += ".en";
     }
 
     const p = AutomaticSpeechRecognitionPipelineFactory;
@@ -107,8 +105,7 @@ const transcribe = async (
         },
     ];
 
-    // TODO: Storage for fully-processed and merged chunks
-    // let decoded_chunks = [];
+    const decoded_data = [];
 
     function chunk_callback(chunk) {
         let last = chunks_to_process[chunks_to_process.length - 1];
@@ -134,17 +131,30 @@ const transcribe = async (
         last.tokens = [...item[0].output_token_ids];
 
         // Merge text chunks
-        // TODO optimise so we don't have to decode all chunks every time
-        let data = transcriber.tokenizer._decode_asr(chunks_to_process, {
+        let data = transcriber.tokenizer._decode_asr([last], {
             time_precision: time_precision,
             return_timestamps: true,
             force_full_sequences: false,
         });
+        // chunk_length_s should be isDistilWhisper ? 20 : 30, but timestamps are off with that logic
+        const chunk_length_s = 20;
+
+        for (const chunk of data[1].chunks) {
+            chunk.timestamp[0] +=
+                chunk_length_s * (chunks_to_process.length - 1);
+            chunk.timestamp[1] +=
+                chunk_length_s * (chunks_to_process.length - 1);
+        }
+        const updated_data = decoded_data.concat(data[1].chunks);
+
+        if (item[0].done) {
+            decoded_data.push(...data[1].chunks);
+        }
 
         self.postMessage({
             status: "update",
             task: "automatic-speech-recognition",
-            data: data,
+            data: ["", { chunks: updated_data }],
         });
     }
 
