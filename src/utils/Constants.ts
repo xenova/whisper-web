@@ -26,9 +26,9 @@ export default {
     DEFAULT_AUDIO_URL: `https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/${
         isMobileOrTablet ? "jfk" : "ted_60_16k"
     }.wav`,
-    DEFAULT_MODEL: "Xenova/whisper-tiny",
+    DEFAULT_MODEL: isMobileOrTablet ? "onnx-community/whisper-tiny": "onnx-community/whisper-base",
     DEFAULT_SUBTASK: "transcribe",
     DEFAULT_LANGUAGE: "english",
     DEFAULT_QUANTIZED: isMobileOrTablet,
-    DEFAULT_MULTILINGUAL: false,
+    DEFAULT_MULTILINGUAL: true,
 };

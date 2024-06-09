@@ -11,23 +11,18 @@ interface ProgressItem {
     status: string;
 }
 
-interface TranscriberUpdateData {
-    data: [
-        string,
-        { chunks: { text: string; timestamp: [number, number | null] }[] },
-    ];
-    text: string;
-}
 
-interface TranscriberCompleteData {
+interface TranscriberUpdateData {
     data: {
         text: string;
         chunks: { text: string; timestamp: [number, number | null] }[];
+        tps: number;
     };
 }
 
 export interface TranscriberData {
     isBusy: boolean;
+    tps?: number;
     text: string;
     chunks: { text: string; timestamp: [number, number | null] }[];
 }
@@ -43,8 +38,6 @@ export interface Transcriber {
     setModel: (model: string) => void;
     multilingual: boolean;
     setMultilingual: (model: boolean) => void;
-    quantized: boolean;
-    setQuantized: (model: boolean) => void;
     subtask: string;
     setSubtask: (subtask: string) => void;
     language?: string;
@@ -76,27 +69,16 @@ export function useTranscriber(): Transcriber {
                 );
                 break;
             case "update":
-                // Received partial update
-                // console.log("update", message);
-                // eslint-disable-next-line no-case-declarations
+            case "complete":
+                const busy = message.status === "update";
                 const updateMessage = message as TranscriberUpdateData;
                 setTranscript({
-                    isBusy: true,
-                    text: updateMessage.data[0],
-                    chunks: updateMessage.data[1].chunks,
+                    isBusy: busy,
+                    text: updateMessage.data.text,
+                    tps: updateMessage.data.tps,
+                    chunks: updateMessage.data.chunks,
                 });
-                break;
-            case "complete":
-                // Received complete transcript
-                // console.log("complete", message);
-                // eslint-disable-next-line no-case-declarations
-                const completeMessage = message as TranscriberCompleteData;
-                setTranscript({
-                    isBusy: false,
-                    text: completeMessage.data.text,
-                    chunks: completeMessage.data.chunks,
-                });
-                setIsBusy(false);
+                setIsBusy(busy);
                 break;
 
             case "initiate":
@@ -110,7 +92,7 @@ export function useTranscriber(): Transcriber {
             case "error":
                 setIsBusy(false);
                 alert(
-                    `${message.data.message} This is most likely because you are using Safari on an M1/M2 Mac. Please try again from Chrome, Firefox, or Edge.\n\nIf this is not the case, please file a bug report.`,
+                    `An error occurred: "${message.data.message}". Please file a bug report.`,
                 );
                 break;
             case "done":
@@ -128,9 +110,6 @@ export function useTranscriber(): Transcriber {
 
     const [model, setModel] = useState<string>(Constants.DEFAULT_MODEL);
     const [subtask, setSubtask] = useState<string>(Constants.DEFAULT_SUBTASK);
-    const [quantized, setQuantized] = useState<boolean>(
-        Constants.DEFAULT_QUANTIZED,
-    );
     const [multilingual, setMultilingual] = useState<boolean>(
         Constants.DEFAULT_MULTILINGUAL,
     );
@@ -168,14 +147,13 @@ export function useTranscriber(): Transcriber {
                     audio,
                     model,
                     multilingual,
-                    quantized,
                     subtask: multilingual ? subtask : null,
                     language:
                         multilingual && language !== "auto" ? language : null,
                 });
             }
         },
-        [webWorker, model, multilingual, quantized, subtask, language],
+        [webWorker, model, multilingual, subtask, language],
     );
 
     const transcriber = useMemo(() => {
@@ -190,8 +168,6 @@ export function useTranscriber(): Transcriber {
             setModel,
             multilingual,
             setMultilingual,
-            quantized,
-            setQuantized,
             subtask,
             setSubtask,
             language,
@@ -205,7 +181,6 @@ export function useTranscriber(): Transcriber {
         transcript,
         model,
         multilingual,
-        quantized,
         subtask,
         language,
     ]);
