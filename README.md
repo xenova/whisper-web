@@ -28,3 +28,21 @@ https://github.com/xenova/whisper-web/assets/26504141/fb170d84-9678-41b5-9248-a1
     > Check out [this issue](https://github.com/xenova/whisper-web/issues/8) for more details.
 
 3. Open the link (e.g., [http://localhost:5173/](http://localhost:5173/)) in your browser.
+
+
+## Building and running with Docker
+
+
+1. Build the Docker image:
+
+    ```bash
+    docker build -t whisper-web .
+    ```
+
+2. Run the Docker container:
+
+    ```bash
+    docker run -p 5173:5173 whisper-web
+    ```
+
+3. Open the link (e.g., [http://localhost:5173/](http://localhost:5173/)) in your browser.
