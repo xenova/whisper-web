@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 import { TranscriberData } from "../hooks/useTranscriber";
 import { formatAudioTimestamp } from "../utils/AudioUtils";
@@ -9,6 +9,7 @@ interface Props {
 
 export default function Transcript({ transcribedData }: Props) {
     const divRef = useRef<HTMLDivElement>(null);
+    const [filename, setFilename] = useState("transcript"); // Default filename
 
     const saveBlob = (blob: Blob, filename: string) => {
         const url = URL.createObjectURL(blob);
@@ -18,6 +19,7 @@ export default function Transcript({ transcribedData }: Props) {
         link.click();
         URL.revokeObjectURL(url);
     };
+
     const exportTXT = () => {
         const chunks = transcribedData?.chunks ?? [];
         const text = chunks
@@ -26,8 +28,9 @@ export default function Transcript({ transcribedData }: Props) {
             .trim();
 
         const blob = new Blob([text], { type: "text/plain" });
-        saveBlob(blob, "transcript.txt");
+        saveBlob(blob, `${filename}.txt`);
     };
+
     const exportJSON = () => {
         let jsonData = JSON.stringify(transcribedData?.chunks ?? [], null, 2);
 
@@ -36,7 +39,7 @@ export default function Transcript({ transcribedData }: Props) {
         jsonData = jsonData.replace(regex, "$1[$2 $3]");
 
         const blob = new Blob([jsonData], { type: "application/json" });
-        saveBlob(blob, "transcript.json");
+        saveBlob(blob, `${filename}.json`);
     };
 
     // Scroll to the bottom when the component updates
@@ -82,6 +85,14 @@ export default function Transcript({ transcribedData }: Props) {
             )}
             {transcribedData && !transcribedData.isBusy && (
                 <div className='w-full text-right'>
+                    {/* Input field for the custom filename */}
+                    <input
+                        type="text"
+                        value={filename}
+                        onChange={(e) => setFilename(e.target.value)}
+                        placeholder="Enter filename"
+                        className='border rounded-lg p-2 mr-2'
+                    />
                     <button
                         onClick={exportTXT}
                         className='text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 inline-flex items-center'
