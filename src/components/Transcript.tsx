@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 import { TranscriberData } from "../hooks/useTranscriber";
 import { formatAudioTimestamp } from "../utils/AudioUtils";
@@ -9,6 +9,7 @@ interface Props {
 
 export default function Transcript({ transcribedData }: Props) {
     const divRef = useRef<HTMLDivElement>(null);
+    const [copying, setCopying] = useState(false);
 
     const saveBlob = (blob: Blob, filename: string) => {
         const url = URL.createObjectURL(blob);
@@ -18,6 +19,29 @@ export default function Transcript({ transcribedData }: Props) {
         link.click();
         URL.revokeObjectURL(url);
     };
+
+    const copyText = async () => {
+        if (copying) return;
+
+        const chunks = transcribedData?.chunks ?? [];
+        const text = chunks
+            .map((chunk) => chunk.text)
+            .join("")
+            .trim();
+
+        setCopying(true);
+
+        try {
+            await navigator.clipboard.writeText(text);
+            setTimeout(() => {
+                setCopying(false);
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text:', err);
+            setCopying(false);
+        }
+    };
+
     const exportTXT = () => {
         const chunks = transcribedData?.chunks ?? [];
         const text = chunks
@@ -28,6 +52,7 @@ export default function Transcript({ transcribedData }: Props) {
         const blob = new Blob([text], { type: "text/plain" });
         saveBlob(blob, "transcript.txt");
     };
+
     const exportJSON = () => {
         let jsonData = JSON.stringify(transcribedData?.chunks ?? [], null, 2);
 
@@ -82,6 +107,13 @@ export default function Transcript({ transcribedData }: Props) {
             )}
             {transcribedData && !transcribedData.isBusy && (
                 <div className='w-full text-right'>
+                    <button
+                        onClick={copyText}
+                        disabled={copying}
+                        className={`text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 inline-flex items-center ${copying ? 'cursor-not-allowed opacity-75' : ''}`}
+                    >
+                        {copying ? 'Copied!' : 'Copy'}
+                    </button>
                     <button
                         onClick={exportTXT}
                         className='text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 inline-flex items-center'
