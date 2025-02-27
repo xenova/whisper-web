@@ -2,13 +2,10 @@ import { AudioManager } from "./components/AudioManager";
 import Transcript from "./components/Transcript";
 import { useTranscriber } from "./hooks/useTranscriber";
 
-// @ts-ignore
-const IS_WEBGPU_AVAILABLE = !!navigator.gpu;
-
 function App() {
     const transcriber = useTranscriber();
 
-    return IS_WEBGPU_AVAILABLE ? (
+    return (
         <div className='flex justify-center items-center min-h-screen'>
             <div className='container flex flex-col justify-center items-center'>
                 <h1 className='text-5xl font-extrabold tracking-tight text-slate-900 sm:text-7xl text-center'>
@@ -30,12 +27,6 @@ function App() {
                     🤗 Transformers.js
                 </a>
             </div>
-        </div>
-    ) : (
-        <div className='fixed w-screen h-screen bg-black z-10 bg-opacity-[92%] text-white text-2xl font-semibold flex justify-center items-center text-center'>
-            WebGPU is not supported
-            <br />
-            by this browser :&#40;
         </div>
     );
 }

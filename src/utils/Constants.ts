@@ -33,4 +33,5 @@ export default {
     DEFAULT_LANGUAGE: "english",
     DEFAULT_QUANTIZED: isMobileOrTablet,
     DEFAULT_MULTILINGUAL: true,
+    DEFAULT_GPU: false,
 };

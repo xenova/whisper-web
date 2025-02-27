@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, JSX } from "react";
 import axios from "axios";
 import Modal from "./modal/Modal";
 import { UrlInput } from "./modal/UrlInput";
@@ -385,6 +385,10 @@ function SettingsModal(props: {
         size: value,
         id: `${key}${props.transcriber.multilingual || key.includes("/distil-") ? "" : ".en"}`,
     }));
+
+    // @ts-ignore
+    const IS_WEBGPU_AVAILABLE = !!navigator.gpu;
+
     return (
         <Modal
             show={props.show}
@@ -406,7 +410,7 @@ function SettingsModal(props: {
                             >{`${id} (${size}MB)`}</option>
                         ))}
                     </select>
-                    <div className='flex justify-end items-center mb-3 px-1'>
+                    <div className='flex justify-between items-center mb-3 px-1'>
                         <div className='flex'>
                             <input
                                 id='multilingual'
@@ -425,6 +429,22 @@ function SettingsModal(props: {
                             ></input>
                             <label htmlFor={"multilingual"} className='ms-1'>
                                 Multilingual
+                            </label>
+                        </div>
+                        <div className='flex'>
+                            <input
+                                id='gpu'
+                                type='checkbox'
+                                checked={props.transcriber.gpu}
+                                disabled={!IS_WEBGPU_AVAILABLE}
+                                onChange={(e) => {
+                                    props.transcriber.setGPU(
+                                        e.target.checked,
+                                    );
+                                }}
+                            ></input>
+                            <label htmlFor={"gpu"} className='ms-1'>
+                                {IS_WEBGPU_AVAILABLE ? "GPU" : "GPU (unsupported browser)"}
                             </label>
                         </div>
                     </div>
@@ -687,11 +707,11 @@ function Tile(props: {
     return (
         <button
             onClick={props.onClick}
-            className='flex items-center justify-center rounded-lg p-2 bg-blue text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200'
+            className='flex items-center justify-center rounded-lg p-2 bg-blue text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200 mr-0'
         >
             <div className='w-7 h-7'>{props.icon}</div>
             {props.text && (
-                <div className='ml-2 break-text text-center text-md w-30'>
+                <div className='ml-2 break-text text-center text-md mw-30'>
                     {props.text}
                 </div>
             )}
