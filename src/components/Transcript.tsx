@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 
 import { TranscriberData } from "../hooks/useTranscriber";
-import { formatAudioTimestamp } from "../utils/AudioUtils";
+import { formatAudioTimestamp, formatSrtTimeRange } from "../utils/AudioUtils";
 
 interface Props {
     transcribedData: TranscriberData | undefined;
@@ -38,14 +38,32 @@ export default function Transcript({ transcribedData }: Props) {
         const blob = new Blob([jsonData], { type: "application/json" });
         saveBlob(blob, "transcript.json");
     };
+    const exportSRT = () => {
+        let chunks = transcribedData?.chunks ?? [];
+        let srt = "";
+        for (let i = 0; i < chunks.length; i++) {
+            srt += `${i + 1}\n`;
+            // TODO - Check why 2nd timestamp is number | null
+            srt += `${formatSrtTimeRange(chunks[i].timestamp[0], chunks[i].timestamp[1] ?? chunks[i].timestamp[0])}\n`;
+            srt += `${chunks[i].text}\n\n`;
+        }
+        const blob = new Blob([srt], { type: "text/plain" });
+        saveBlob(blob, "transcript.srt");
+    }
+
+    const exportButtons = [
+        { name: "TXT", onClick: exportTXT, },
+        { name: "JSON", onClick: exportJSON, },
+        { name: "SRT", onClick: exportSRT, },
+    ]
 
     // Scroll to the bottom when the component updates
     useEffect(() => {
         if (divRef.current) {
             const diff = Math.abs(
                 divRef.current.offsetHeight +
-                    divRef.current.scrollTop -
-                    divRef.current.scrollHeight,
+                divRef.current.scrollTop -
+                divRef.current.scrollHeight,
             );
 
             if (diff <= 64) {
@@ -56,38 +74,37 @@ export default function Transcript({ transcribedData }: Props) {
     });
 
     return (
-        <div
-            ref={divRef}
-            className='w-full flex flex-col my-2 p-4 max-h-[20rem] overflow-y-auto'
-        >
-            {transcribedData?.chunks &&
+        <>
+            <div
+                ref={divRef}
+                className='w-full flex flex-col my-2 p-4 max-h-[20rem] overflow-y-auto'
+            >
+                {transcribedData?.chunks &&
                 transcribedData.chunks.map((chunk, i) => (
-                    <div
-                        key={`${i}-${chunk.text}`}
-                        className='w-full flex flex-row mb-2 bg-white rounded-lg p-4 shadow-xl shadow-black/5 ring-1 ring-slate-700/10'
-                    >
-                        <div className='mr-5'>
-                            {formatAudioTimestamp(chunk.timestamp[0])}
+                        <div
+                            key={`${i}-${chunk.text}`}
+                            className='w-full flex flex-row mb-2 bg-white rounded-lg p-4 shadow-xl shadow-black/5 ring-1 ring-slate-700/10'
+                        >
+                            <div className='mr-5'>
+                                {formatAudioTimestamp(chunk.timestamp[0])}
+                            </div>
+                            {chunk.text}
                         </div>
-                        {chunk.text}
-                    </div>
-                ))}
-            {transcribedData && !transcribedData.isBusy && (
-                <div className='w-full text-right'>
-                    <button
-                        onClick={exportTXT}
-                        className='text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 inline-flex items-center'
-                    >
-                        Export TXT
-                    </button>
-                    <button
-                        onClick={exportJSON}
-                        className='text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 inline-flex items-center'
-                    >
-                        Export JSON
-                    </button>
-                </div>
-            )}
-        </div>
+                    ))}
+            </div>
+            {
+                transcribedData && !transcribedData.isBusy && (
+                    < div className='w-full text-right mx-2'>
+                        {exportButtons.map((button, i) => (
+                            <button key={i}
+                                onClick={button.onClick}
+                                className='text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 inline-flex items-center'>
+                                Export {button.name}
+                            </button>
+                        ))}
+                    </div >
+                )
+            }
+        </>
     );
 }
