@@ -339,7 +339,7 @@ class WebmFloat extends WebmBase<number> {
 interface ContainerData {
     id: number;
     idHex?: string;
-    data: WebmBase<any>;
+    data: WebmBase<unknown>;
 }
 
 class WebmContainer extends WebmBase<ContainerData[]> {
@@ -378,7 +378,8 @@ class WebmContainer extends WebmBase<ContainerData[]> {
             const data = this.source!.slice(this.offset, end);
 
             const info = sections[id] || { name: "Unknown", type: "Unknown" };
-            let ctr: any = WebmBase;
+            let ctr: new (name: string, type: string) => WebmBase<unknown> =
+                WebmBase;
             switch (info.type) {
                 case "Container":
                     ctr = WebmContainer;
@@ -400,11 +401,13 @@ class WebmContainer extends WebmBase<ContainerData[]> {
         }
     }
     writeUint(x: number, draft = false) {
-        for (
-            var bytes = 1, flag = 0x80;
-            x >= flag && bytes < 8;
-            bytes++, flag *= 0x80
-        ) {}
+        let bytes = 1;
+        let flag = 0x80;
+
+        while (x >= flag && bytes < 8) {
+            bytes++;
+            flag *= 0x80;
+        }
 
         if (!draft) {
             let value = flag + x;

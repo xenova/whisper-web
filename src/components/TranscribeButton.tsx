@@ -3,7 +3,7 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     isTranscribing: boolean;
 }
 
-export function TranscribeButton(props: Props): JSX.Element {
+export function TranscribeButton(props: Props): React.JSX.Element {
     const { isModelLoading, isTranscribing, onClick, ...buttonProps } = props;
     return (
         <button
@@ -27,7 +27,7 @@ export function TranscribeButton(props: Props): JSX.Element {
     );
 }
 
-export function Spinner(props: { text: string }): JSX.Element {
+export function Spinner(props: { text: string }): React.JSX.Element {
     return (
         <div role='status'>
             <svg

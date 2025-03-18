@@ -1,4 +1,3 @@
- 
 import { pipeline, WhisperTextStreamer } from "@huggingface/transformers";
 
 // Define model factories
@@ -23,7 +22,7 @@ class PipelineFactory {
                             : "fp32",
                     decoder_model_merged: "q4", // or 'fp32' ('fp16' is broken)
                 },
-                device: "webgpu",
+                device: this.gpu ? "webgpu" : "wasm",
                 progress_callback,
             });
         }

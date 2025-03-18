@@ -37,6 +37,8 @@ export interface Transcriber {
     setModel: (model: string) => void;
     multilingual: boolean;
     setMultilingual: (model: boolean) => void;
+    gpu: boolean;
+    setGPU: (model: boolean) => void;
     subtask: string;
     setSubtask: (subtask: string) => void;
     language?: string;
@@ -68,7 +70,7 @@ export function useTranscriber(): Transcriber {
                 );
                 break;
             case "update":
-            case "complete":
+            case "complete": {
                 const busy = message.status === "update";
                 const updateMessage = message as TranscriberUpdateData;
                 setTranscript({
@@ -79,7 +81,7 @@ export function useTranscriber(): Transcriber {
                 });
                 setIsBusy(busy);
                 break;
-
+            }
             case "initiate":
                 // Model file start load: add a new progress item to the list.
                 setIsModelLoading(true);
@@ -112,6 +114,7 @@ export function useTranscriber(): Transcriber {
     const [multilingual, setMultilingual] = useState<boolean>(
         Constants.DEFAULT_MULTILINGUAL,
     );
+    const [gpu, setGPU] = useState<boolean>(Constants.DEFAULT_GPU);
     const [language, setLanguage] = useState<string>(
         Constants.DEFAULT_LANGUAGE,
     );
@@ -146,13 +149,14 @@ export function useTranscriber(): Transcriber {
                     audio,
                     model,
                     multilingual,
+                    gpu,
                     subtask: multilingual ? subtask : null,
                     language:
                         multilingual && language !== "auto" ? language : null,
                 });
             }
         },
-        [webWorker, model, multilingual, subtask, language],
+        [webWorker, model, multilingual, gpu, subtask, language],
     );
 
     const transcriber = useMemo(() => {
@@ -167,12 +171,15 @@ export function useTranscriber(): Transcriber {
             setModel,
             multilingual,
             setMultilingual,
+            gpu,
+            setGPU,
             subtask,
             setSubtask,
             language,
             setLanguage,
         };
     }, [
+        onInputChange,
         isBusy,
         isModelLoading,
         progressItems,
@@ -180,6 +187,7 @@ export function useTranscriber(): Transcriber {
         transcript,
         model,
         multilingual,
+        gpu,
         subtask,
         language,
     ]);
