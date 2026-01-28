@@ -311,8 +311,8 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                             <label>
                                 Loading model files... (only run once)
                             </label>
-                            {props.transcriber.progressItems.map((data) => (
-                                <div key={data.file}>
+                            {props.transcriber.progressItems.map((data, index) => (
+                                <div key={`${data.file}-${index}`}>
                                     <Progress
                                         text={data.file}
                                         percentage={data.progress}
@@ -447,6 +447,19 @@ function SettingsModal(props: {
                             </label>
                         </div>
                     </div>
+                    <label>Select the device to use for transcription.</label>
+                    <select
+                        className='mt-1 mb-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'
+                        value={props.transcriber.device}
+                        onChange={(e) => {
+                            props.transcriber.setDevice(
+                                e.target.value as "cpu" | "webgpu",
+                            );
+                        }}
+                    >
+                        <option value="cpu">CPU (WASM)</option>
+                        <option value="webgpu">WebGPU (GPU Accelerated)</option>
+                    </select>
                     {props.transcriber.multilingual && (
                         <>
                             <label>Select the source language.</label>

@@ -21,6 +21,20 @@ function mobileTabletCheck() {
     return check;
 }
 const isMobileOrTablet = mobileTabletCheck();
+
+// Check if WebGPU is available
+async function isWebGPUAvailable() {
+    if (!("gpu" in navigator)) {
+        return false;
+    }
+    try {
+        const adapter = await (navigator as any).gpu.requestAdapter();
+        return adapter !== null;
+    } catch {
+        return false;
+    }
+}
+
 export default {
     SAMPLING_RATE: 16000,
     DEFAULT_AUDIO_URL: `https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/${
@@ -31,4 +45,6 @@ export default {
     DEFAULT_LANGUAGE: "english",
     DEFAULT_QUANTIZED: isMobileOrTablet,
     DEFAULT_MULTILINGUAL: false,
+    DEFAULT_DEVICE: "cpu" as "cpu" | "webgpu",
+    isWebGPUAvailable,
 };

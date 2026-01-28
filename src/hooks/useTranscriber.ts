@@ -12,10 +12,15 @@ interface ProgressItem {
 }
 
 interface TranscriberUpdateData {
+    // Support both CPU and WebGPU formats
     data: [
         string,
         { chunks: { text: string; timestamp: [number, number | null] }[] },
-    ];
+    ] | {
+        text: string;
+        chunks: { text: string; timestamp: [number, number | null] }[];
+        tps?: number;
+    };
     text: string;
 }
 
@@ -49,6 +54,8 @@ export interface Transcriber {
     setSubtask: (subtask: string) => void;
     language?: string;
     setLanguage: (language: string) => void;
+    device: "cpu" | "webgpu";
+    setDevice: (device: "cpu" | "webgpu") => void;
 }
 
 export function useTranscriber(): Transcriber {
@@ -80,11 +87,22 @@ export function useTranscriber(): Transcriber {
                 // console.log("update", message);
                 // eslint-disable-next-line no-case-declarations
                 const updateMessage = message as TranscriberUpdateData;
-                setTranscript({
-                    isBusy: true,
-                    text: updateMessage.data[0],
-                    chunks: updateMessage.data[1].chunks,
-                });
+                // Handle both CPU and WebGPU formats
+                if (Array.isArray(updateMessage.data)) {
+                    // CPU format: data is [text, {chunks: [...]}]
+                    setTranscript({
+                        isBusy: true,
+                        text: updateMessage.data[0],
+                        chunks: updateMessage.data[1].chunks,
+                    });
+                } else {
+                    // WebGPU format: data is {text, chunks, tps}
+                    setTranscript({
+                        isBusy: true,
+                        text: updateMessage.data.text || "",
+                        chunks: updateMessage.data.chunks || [],
+                    });
+                }
                 break;
             case "complete":
                 // Received complete transcript
@@ -137,6 +155,9 @@ export function useTranscriber(): Transcriber {
     const [language, setLanguage] = useState<string>(
         Constants.DEFAULT_LANGUAGE,
     );
+    const [device, setDevice] = useState<"cpu" | "webgpu">(
+        Constants.DEFAULT_DEVICE,
+    );
 
     const onInputChange = useCallback(() => {
         setTranscript(undefined);
@@ -172,10 +193,11 @@ export function useTranscriber(): Transcriber {
                     subtask: multilingual ? subtask : null,
                     language:
                         multilingual && language !== "auto" ? language : null,
+                    device,
                 });
             }
         },
-        [webWorker, model, multilingual, quantized, subtask, language],
+        [webWorker, model, multilingual, quantized, subtask, language, device],
     );
 
     const transcriber = useMemo(() => {
@@ -196,6 +218,8 @@ export function useTranscriber(): Transcriber {
             setSubtask,
             language,
             setLanguage,
+            device,
+            setDevice,
         };
     }, [
         isBusy,
@@ -208,6 +232,7 @@ export function useTranscriber(): Transcriber {
         quantized,
         subtask,
         language,
+        device,
     ]);
 
     return transcriber;
