@@ -1,0 +1,10 @@
+services:
+  whisper-web:
+    container_name: whisper-web-prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: whisper-web-prod:latest
+    restart: unless-stopped
+    ports:
+      - "8080:80"
